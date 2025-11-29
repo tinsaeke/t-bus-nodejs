@@ -64,18 +64,4 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// @route   GET /logout
-// @desc    Logout user and destroy session
-router.get('/logout', (req, res) => {
-  req.session.destroy(err => {
-    if (err) {
-      console.error('Session destruction error:', err);
-      return res.redirect('/'); // Redirect home on error
-    }
-    // The cookie is typically cleared automatically, but this is a good practice
-    res.clearCookie('connect.sid');
-    res.redirect('/login');
-  });
-});
-
 module.exports = router;

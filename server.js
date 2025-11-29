@@ -6,11 +6,8 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
-// Import authentication middleware
-const { isAdmin, isPartner } = require('./authMiddleware');
-
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 
 // Security middleware
 app.use(helmet({
@@ -59,22 +56,13 @@ app.use(session({
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Middleware to make user session available in all templates
-app.use((req, res, next) => {
-  res.locals.admin = req.session.admin || null;
-  res.locals.partner = req.session.partner || null;
-  // A generic 'user' object for easy checking in templates
-  res.locals.user = req.session.admin || req.session.partner || null;
-  next();
-});
-
 // Serve static files (CSS, JS, images). This should come before the routes.
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Routes
 app.use('/api', require('./routes/api'));
-app.use('/admin', isAdmin, require('./routes/admin')); // Protect all admin routes
-app.use('/partner', isPartner, require('./routes/partner-fixed')); // Protect all partner routes
+app.use('/admin', require('./routes/admin')); // Use the correct admin routes file
+app.use('/partner', require('./routes/partner-fixed')); // Use the corrected partner routes
 app.use('/', require('./routes/auth')); // General authentication routes
 app.use('/', require('./routes/public')); // Public routes should be last
 

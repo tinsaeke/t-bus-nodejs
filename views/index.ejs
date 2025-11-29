@@ -82,23 +82,12 @@
                             <li><a class="dropdown-item" href="/lang/am">አማርኛ</a></li>
                         </ul>
                     </div>
-                    <% if (user) { %>
-                        <!-- Show Dashboard and Logout if user is logged in -->
-                        <% if (user.role === 'super_admin' || user.role === 'admin') { %>
-                            <a href="/admin/dashboard" class="btn btn-outline-primary me-2">Dashboard</a>
-                        <% } else { %>
-                            <a href="/partner/dashboard" class="btn btn-outline-primary me-2">Dashboard</a>
-                        <% } %>
-                        <a href="/logout" class="btn btn-primary">
-                            <i class="ri-logout-box-r-line me-1"></i>Logout
-                        </a>
-                    <% } else { %>
-                        <!-- Show Login and Support if user is not logged in -->
-                        <a href="/login" class="btn btn-outline-primary me-2">
-                            <i class="ri-user-line me-1"></i><%= t.login %>
-                        </a>
-                        <a href="#contact" class="btn btn-primary"><i class="ri-phone-line me-1"></i><%= t.support %></a>
-                    <% } %>
+                    <a href="/login" class="btn btn-outline-primary me-2">
+                        <i class="ri-user-line me-1"></i><%= t.login %>
+                    </a>
+                    <a href="#contact" class="btn btn-primary">
+                        <i class="ri-phone-line me-1"></i><%= t.support %>
+                    </a>
                 </div>
             </div>
         </div>
