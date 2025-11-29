@@ -1,0 +1,37 @@
+<%- include('../partials/partner-header') %>
+
+<div class="container-fluid">
+  <!-- Page Heading -->
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Operating Cities</h1>
+  </div>
+
+  <!-- Content Row -->
+  <div class="row">
+    <div class="col-lg-12">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Cities We Operate In</h6>
+        </div>
+        <div class="card-body">
+          <p>This is a list of cities where your company provides services. To add or remove cities, please contact the T-BUS system administrator.</p>
+          <% if (cities && cities.length > 0) { %>
+            <ul class="list-group">
+              <% cities.forEach(city => { %>
+                <li class="list-group-item">
+                  <%= city.name %>
+                </li>
+              <% }); %>
+            </ul>
+          <% } else { %>
+            <div class="alert alert-warning" role="alert">
+              No operating cities have been assigned to your company yet. Please contact an administrator.
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/partner-footer') %>

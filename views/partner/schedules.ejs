@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/partner/dashboard">
+                <i class="ri-bus-line me-2"></i>T BUS Partner
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                        <i class="ri-building-line me-1"></i><%= partner.company_name %>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><span class="dropdown-item-text"><%= partner.name %></span></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form method="POST" action="/partner/logout" class="d-inline">
+                                <button type="submit" class="dropdown-item">
+                                    <i class="ri-logout-box-line me-2"></i>Logout
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 bg-light vh-100 p-0">
+                <div class="list-group list-group-flush">
+                    <a href="/partner/dashboard" class="list-group-item list-group-item-action">
+                        <i class="ri-dashboard-line me-2"></i>Dashboard
+                    </a>
+                    <a href="/partner/buses" class="list-group-item list-group-item-action">
+                        <i class="ri-bus-line me-2"></i>My Buses
+                    </a>
+                    <a href="/partner/schedules" class="list-group-item list-group-item-action active">
+                        <i class="ri-calendar-line me-2"></i>Schedules
+                    </a>
+                    <a href="/partner/bookings" class="list-group-item list-group-item-action">
+                        <i class="ri-ticket-line me-2"></i>Bookings
+                    </a>
+                    <a href="/partner/cities" class="list-group-item list-group-item-action">
+                        <i class="ri-map-pin-line me-2"></i>Cities
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>Manage Schedules</h2>
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addScheduleModal">
+                        <i class="ri-add-line me-2"></i>Add Schedule
+                    </button>
+                </div>
+                
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Bus</th>
+                                        <th>Route</th>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>Price</th>
+                                        <th>Seats</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if (schedules.length === 0) { %>
+                                        <tr>
+                                            <td colspan="8" class="text-center py-4 text-muted">
+                                                <i class="ri-calendar-line fs-2 d-block mb-2"></i>
+                                                No schedules found
+                                            </td>
+                                        </tr>
+                                    <% } else { %>
+                                        <% schedules.forEach(schedule => { %>
+                                            <tr>
+                                                <td><%= schedule.bus_number %></td>
+                                                <td><%= schedule.from_city %> → <%= schedule.to_city %></td>
+                                                <td><%= schedule.travel_date %></td>
+                                                <td>
+                                                    <%= schedule.departure_time.substring(0,5) %> - 
+                                                    <%= schedule.arrival_time.substring(0,5) %>
+                                                </td>
+                                                <td>ETB <%= schedule.price %></td>
+                                                <td><%= schedule.available_seats %> left</td>
+                                                <td>
+                                                    <span class="badge status-badge <%= schedule.is_active ? 'bg-success' : 'bg-danger' %>">
+                                                        <%= schedule.is_active ? 'Active' : 'Inactive' %>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button type="button" class="btn btn-outline-primary btn-edit-schedule"
+                                                                data-bs-toggle="modal" data-bs-target="#editScheduleModal"
+                                                                data-schedule='<%- JSON.stringify(schedule) %>'>
+                                                            <i class="ri-edit-line"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-secondary toggle-status" title="Toggle Status"
+                                                                data-entity="schedule" data-id="<%= schedule.id %>">
+                                                            <i class="ri-refresh-line"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-danger btn-delete" title="Delete"
+                                                                data-entity="schedule" data-id="<%= schedule.id %>">
+                                                            <i class="ri-delete-bin-line"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <% }); %>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Schedule Modal -->
+    <div class="modal fade" id="addScheduleModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Schedule</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="/partner/schedules/add">
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Bus *</label>
+                                <select class="form-select" name="bus_id" required>
+                                    <option value="">Select bus</option>
+                                    <% buses.forEach(bus => { %>
+                                        <option value="<%= bus.id %>"><%= bus.bus_number %> (<%= bus.type %>)</option>
+                                    <% }); %>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Travel Date *</label>
+                                <input type="date" class="form-control" name="travel_date" 
+                                       min="<%= new Date().toISOString().split('T')[0] %>" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">From City *</label>
+                                <select class="form-select" name="from_city_id" required>
+                                    <option value="">Select departure city</option>
+                                    <% cities.forEach(city => { %>
+                                        <option value="<%= city.id %>"><%= city.name %></option>
+                                    <% }); %>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">To City *</label>
+                                <select class="form-select" name="to_city_id" required>
+                                    <option value="">Select destination city</option>
+                                    <% cities.forEach(city => { %>
+                                        <option value="<%= city.id %>"><%= city.name %></option>
+                                    <% }); %>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Departure Time *</label>
+                                <input type="time" class="form-control" name="departure_time" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Arrival Time *</label>
+                                <input type="time" class="form-control" name="arrival_time" required>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Price (ETB) *</label>
+                                <input type="number" class="form-control" name="price" min="50" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Add Schedule</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Schedule Modal -->
+    <div class="modal fade" id="editScheduleModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Schedule</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST"> <!-- Action will be set by JS -->
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Bus *</label>
+                                <select class="form-select" name="bus_id" id="edit_bus_id" required>
+                                    <% buses.forEach(bus => { %>
+                                        <option value="<%= bus.id %>"><%= bus.bus_number %> (<%= bus.type %>)</option>
+                                    <% }); %>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Travel Date *</label>
+                                <input type="date" class="form-control" name="travel_date" id="edit_travel_date" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">From City *</label>
+                                <select class="form-select" name="from_city_id" id="edit_from_city_id" required>
+                                    <% cities.forEach(city => { %>
+                                        <option value="<%= city.id %>"><%= city.name %></option>
+                                    <% }); %>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">To City *</label>
+                                <select class="form-select" name="to_city_id" id="edit_to_city_id" required>
+                                    <% cities.forEach(city => { %>
+                                        <option value="<%= city.id %>"><%= city.name %></option>
+                                    <% }); %>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Departure Time *</label>
+                                <input type="time" class="form-control" name="departure_time" id="edit_departure_time" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Arrival Time *</label>
+                                <input type="time" class="form-control" name="arrival_time" id="edit_arrival_time" required>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Price (ETB) *</label>
+                                <input type="number" class="form-control" name="price" id="edit_price" min="50" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container for notifications -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11" id="toast-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Load the custom partner script -->
+    <script src="/js/partner.js"></script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/admin/dashboard">
+                <i class="ri-bus-line me-2"></i>T BUS Admin
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                        <i class="ri-user-line me-1"></i><%= admin.name %>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <form method="POST" action="/admin/logout" class="d-inline">
+                                <button type="submit" class="dropdown-item">
+                                    <i class="ri-logout-box-line me-2"></i>Logout
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 bg-light vh-100 p-0">
+                <div class="list-group list-group-flush">
+                    <a href="/admin/dashboard" class="list-group-item list-group-item-action active">
+                        <i class="ri-dashboard-line me-2"></i>Dashboard
+                    </a>
+                    <a href="/admin/companies" class="list-group-item list-group-item-action">
+                        <i class="ri-building-line me-2"></i>Companies
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 p-4">
+                <h2 class="mb-4">Dashboard</h2>
+                
+                <!-- Stats Cards -->
+                <div class="row g-4 mb-4">
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="ri-building-line text-primary fs-1"></i>
+                                <h3 class="mt-2 mb-0"><%= stats.totalCompanies %></h3>
+                                <p class="text-muted mb-0">Total Companies</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="ri-shield-check-line text-success fs-1"></i>
+                                <h3 class="mt-2 mb-0"><%= stats.activeCompanies %></h3>
+                                <p class="text-muted mb-0">Active Companies</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="ri-user-star-line text-warning fs-1"></i>
+                                <h3 class="mt-2 mb-0"><%= stats.partnerUsers %></h3>
+                                <p class="text-muted mb-0">Partner Users</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="ri-money-dollar-circle-line text-info fs-1"></i>
+                                <h3 class="mt-2 mb-0">ETB <%= stats.revenue.toLocaleString() %></h3>
+                                <p class="text-muted mb-0">Total Revenue</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header">
+                                <h5 class="mb-0">Quick Actions</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <a href="/admin/companies" class="btn btn-outline-success w-100">
+                                            <i class="ri-building-line me-2"></i>Manage Companies
+                                        </a>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <a href="/" target="_blank" class="btn btn-outline-info w-100">
+                                            <i class="ri-external-link-line me-2"></i>View Website
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

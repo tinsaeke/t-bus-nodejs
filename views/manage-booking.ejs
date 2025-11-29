@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .navbar-brand {
+            font-weight: 700;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3">
+        <div class="container">
+            <a class="navbar-brand" href="/"><i class="ri-bus-line me-2"></i>T BUS</a>
+            <a href="/" class="btn btn-outline-primary">
+                <i class="ri-arrow-left-line me-1"></i>Back to Home
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-5 pt-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="text-center mb-5">
+                    <h2 class="fw-bold">Manage Your Booking</h2>
+                    <p class="text-muted">Enter your booking details to view or modify your reservation</p>
+                </div>
+
+                <!-- Search Form -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <form method="POST" action="/manage-booking">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Booking Reference *</label>
+                                    <input type="text" class="form-control" name="booking_reference" 
+                                           placeholder="e.g., TB12345678" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Phone Number *</label>
+                                    <input type="tel" class="form-control" name="passenger_phone" 
+                                           placeholder="e.g., +251911223344" required>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="ri-search-line me-2"></i>Find My Booking
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Error Message -->
+                <% if (error) { %>
+                    <div class="alert alert-danger">
+                        <i class="ri-error-warning-line me-2"></i><%= error %>
+                    </div>
+                <% } %>
+
+                <!-- Booking Details -->
+                <% if (booking) { %>
+                    <!-- Status Alert -->
+                    <div class="alert alert-<%= booking.booking_status === 'confirmed' ? 'success' : booking.booking_status === 'cancelled' ? 'danger' : booking.booking_status === 'pending_approval' ? 'warning' : 'info' %> mb-4">
+                        <div class="d-flex align-items-center">
+                            <i class="ri-<%= booking.booking_status === 'confirmed' ? 'check-circle' : booking.booking_status === 'cancelled' ? 'close-circle' : booking.booking_status === 'pending_approval' ? 'time' : 'information' %>-line fs-4 me-3"></i>
+                            <div>
+                                <h5 class="mb-1">Ticket Status: <%= booking.booking_status.replace('_', ' ').toUpperCase() %></h5>
+                                <% if (booking.booking_status === 'confirmed') { %>
+                                    <p class="mb-0">Your ticket is confirmed and ready for travel!</p>
+                                <% } else if (booking.booking_status === 'cancelled') { %>
+                                    <p class="mb-0">This booking has been cancelled. Contact support for refund information.</p>
+                                <% } else if (booking.booking_status === 'pending_approval') { %>
+                                    <p class="mb-0">Your booking is waiting for bus company approval. You'll be notified once approved.</p>
+                                <% } else { %>
+                                    <p class="mb-0">Your booking is being processed.</p>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-<%= booking.booking_status === 'confirmed' ? 'success' : booking.booking_status === 'cancelled' ? 'danger' : 'warning' %> text-white">
+                            <h5 class="mb-0">
+                                <i class="ri-ticket-line me-2"></i>Booking Details
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <h6 class="fw-bold text-primary">Trip Details</h6>
+                                    <div class="mb-2">
+                                        <strong>Route:</strong> <%= booking.from_city %> → <%= booking.to_city %>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Date:</strong> <%= booking.travel_date %>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Time:</strong> <%= booking.departure_time.substring(0,5) %> - <%= booking.arrival_time.substring(0,5) %>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Company:</strong> <%= booking.company_name %>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Bus:</strong> <%= booking.bus_number %>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <h6 class="fw-bold text-primary">Passenger Details</h6>
+                                    <div class="mb-2">
+                                        <strong>Name:</strong> <%= booking.passenger_full_name %>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Phone:</strong> <%= booking.passenger_phone %>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Seat:</strong> <%= booking.seat_number %>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Reference:</strong> <span class="badge bg-dark"><%= booking.booking_reference %></span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Total:</strong> <span class="text-success fw-bold">ETB <%= booking.total_price %></span>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <hr>
+                                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                                        <div class="mb-2">
+                                            <span class="badge bg-<%= booking.booking_status === 'confirmed' ? 'success' : booking.booking_status === 'cancelled' ? 'danger' : booking.booking_status === 'pending_approval' ? 'warning' : 'secondary' %> me-2 fs-6">
+                                                <i class="ri-<%= booking.booking_status === 'confirmed' ? 'check' : booking.booking_status === 'cancelled' ? 'close' : 'time' %>-line me-1"></i>
+                                                <%= booking.booking_status.replace('_', ' ').toUpperCase() %>
+                                            </span>
+                                            <span class="badge bg-<%= booking.payment_status === 'paid' ? 'success' : booking.payment_status === 'failed' ? 'danger' : 'warning' %> fs-6">
+                                                <i class="ri-money-dollar-circle-line me-1"></i>
+                                                <%= booking.payment_status.replace('_', ' ').toUpperCase() %>
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="d-flex gap-2 flex-wrap">
+                                            <% if (booking.booking_status === 'confirmed' && booking.payment_status === 'paid') { %>
+                                                <button id="mainPrintTicketButton" class="btn btn-success">
+                                                    <i class="ri-printer-line me-1"></i>Print Ticket
+                                                </button>
+                                                <button onclick="viewTicketDetails()" class="btn btn-primary">
+                                                    <i class="ri-eye-line me-1"></i>View Details
+                                                </button>
+                                            <% } else if (booking.booking_status === 'cancelled') { %>
+                                                <button class="btn btn-outline-secondary" disabled>
+                                                    <i class="ri-close-circle-line me-1"></i>Cancelled
+                                                </button>
+                                                <a href="tel:+251911223344" class="btn btn-outline-primary">
+                                                    <i class="ri-phone-line me-1"></i>Contact Support
+                                                </a>
+                                            <% } else if (booking.booking_status === 'pending_approval') { %>
+                                                <button class="btn btn-outline-warning" disabled>
+                                                    <i class="ri-time-line me-1"></i>Awaiting Approval
+                                                </button>
+                                                <button onclick="refreshStatus()" class="btn btn-outline-primary">
+                                                    <i class="ri-refresh-line me-1"></i>Refresh Status
+                                                </button>
+                                            <% } else { %>
+                                                <button class="btn btn-outline-secondary" disabled>
+                                                    <i class="ri-loader-line me-1"></i>Processing
+                                                </button>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ticket Details Modal -->
+                    <% if (booking.booking_status === 'confirmed' && booking.payment_status === 'paid') { %>
+                        <div class="modal fade" id="ticketModal" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-success text-white">
+                                        <h5 class="modal-title">Digital Ticket</h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body" id="ticketContent">
+                                        <div class="text-center mb-4">
+                                            <h3 class="text-success">T-BUS ETHIOPIA</h3>
+                                            <p class="text-muted">Digital Bus Ticket</p>
+                                        </div>
+                                        
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <strong>Booking Reference:</strong><br>
+                                                <span class="fs-4 text-primary"><%= booking.booking_reference %></span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Passenger:</strong><br>
+                                                <%= booking.passenger_full_name %>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>From:</strong><br>
+                                                <%= booking.from_city %> - <%= booking.departure_time.substring(0,5) %>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>To:</strong><br>
+                                                <%= booking.to_city %> - <%= booking.arrival_time.substring(0,5) %>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Travel Date:</strong><br>
+                                                <%= booking.travel_date %>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Seat Number:</strong><br>
+                                                <%= booking.seat_number %>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Bus Company:</strong><br>
+                                                <%= booking.company_name %>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Bus Number:</strong><br>
+                                                <%= booking.bus_number %>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="text-center mt-4">
+                                            <div class="bg-light p-3 rounded">
+                                                <i class="ri-qr-code-line" style="font-size: 4rem;"></i>
+                                                <p class="small mt-2 mb-0">Show this QR code at boarding</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-primary" id="modalPrintTicketButton">Print Ticket</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function printTicket() {
+            const ticketContent = document.getElementById('ticketContent');
+            if (ticketContent) {
+                const printWindow = window.open('', '_blank');
+                
+                // Get all stylesheet links from the current document
+                const stylesheets = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+                                         .map(link => link.outerHTML)
+                                         .join('');
+
+                printWindow.document.write(`
+                    <html>
+                        <head>
+                            <title>T-BUS Ticket</title>
+                            ${stylesheets}
+                            <style>
+                                body { font-family: Arial, sans-serif; padding: 20px; }
+                                .text-center { text-align: center; }
+                                .text-primary { color: #2563eb; }
+                                .text-success { color: #10b981; }
+                                .fs-4 { font-size: 1.5rem; }
+                                .row { display: flex; flex-wrap: wrap; }
+                                .col-md-6 { width: 50%; padding: 10px; }
+                                .bg-light { background-color: #f8f9fa; padding: 15px; border-radius: 5px; }
+                                /* Add specific styles for print if needed, overriding or complementing existing styles */
+                                @media print {
+                                    /* Example: Hide elements not relevant to the ticket print */
+                                    .modal-footer { display: none; } 
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            ${ticketContent.innerHTML}
+                        </body>
+                    </html>
+                `);
+                printWindow.document.close();
+                printWindow.print();
+            } else {
+                // Fallback for when ticketContent is not found (shouldn't happen for the modal button)
+                window.print();
+            }
+        }
+        
+        function viewTicketDetails() {
+            const modal = new bootstrap.Modal(document.getElementById('ticketModal'));
+            modal.show();
+        }
+        
+        function refreshStatus() {
+            location.reload();
+        }
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const mainPrintButton = document.getElementById('mainPrintTicketButton');
+            const modalPrintButton = document.getElementById('modalPrintTicketButton');
+
+            if (mainPrintButton) {
+                mainPrintButton.addEventListener('click', printTicket);
+            }
+            if (modalPrintButton) {
+                modalPrintButton.addEventListener('click', printTicket);
+            }
+        });
+    </script>
+</body>
+</html>

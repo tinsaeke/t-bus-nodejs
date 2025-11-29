@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Your Seat - T BUS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        .bus-container {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 2px solid #e9ecef;
+        }
+        .driver-section {
+            background: #6c757d;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .seat-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 12px 0;
+            gap: 25px;
+        }
+        .seat-group {
+            display: flex;
+            gap: 8px;
+        }
+        .aisle {
+            width: 50px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .seat {
+            width: 45px;
+            height: 45px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .seat.available {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+        .seat.available:hover {
+            background: #218838;
+            transform: scale(1.05);
+        }
+        .seat.selected {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+        }
+        .seat.booked {
+            background: #dc3545;
+            color: white;
+            border-color: #dc3545;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 25px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #dee2e6;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-seat {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid;
+        }
+        .row-label {
+            width: 40px;
+            text-align: right;
+            font-weight: bold;
+            color: #6c757d;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="ri-bus-line me-2"></i>T BUS
+            </a>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <div class="row">
+            <!-- Left Column - Seat Map -->
+            <div class="col-lg-8">
+                <h2 class="mb-4">Select Your Seat</h2>
+                
+                <!-- Trip Information -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">
+                            <i class="ri-route-line me-2"></i>
+                            <%= schedule.from_city_name %> → <%= schedule.to_city_name %>
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong><i class="ri-calendar-line me-2"></i>Date:</strong> 
+                                <%= new Date(schedule.travel_date).toLocaleDateString() %>
+                            </div>
+                            <div class="col-md-6">
+                                <strong><i class="ri-time-line me-2"></i>Time:</strong> 
+                                <%= schedule.departure_time.substring(0,5) %>
+                            </div>
+                            <div class="col-md-6">
+                                <strong><i class="ri-bus-line me-2"></i>Bus:</strong> 
+                                <%= schedule.bus_number %>
+                            </div>
+                            <div class="col-md-6">
+                                <strong><i class="ri-money-dollar-circle-line me-2"></i>Price:</strong> 
+                                ETB <%= parseFloat(schedule.price).toFixed(2) %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seat Selection Area -->
+                <div class="card">
+                    <div class="card-body">
+                        <!-- Legend -->
+                        <div class="legend">
+                            <div class="legend-item">
+                                <div class="legend-seat" style="background: #28a745; border-color: #28a745;"></div>
+                                <span>Available</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-seat" style="background: #007bff; border-color: #007bff;"></div>
+                                <span>Selected</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-seat" style="background: #dc3545; border-color: #dc3545;"></div>
+                                <span>Booked</span>
+                            </div>
+                        </div>
+
+                        <!-- Seat Map Container -->
+                        <div id="seat-map-container">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary mb-3" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p>Loading seat map...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Booking Form -->
+            <div class="col-lg-4">
+                <div class="sticky-top" style="top: 20px;">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">
+                                <i class="ri-ticket-line me-2"></i>Booking Details
+                            </h4>
+                        </div>
+                        <div class="card-body">
+                            <form id="bookingForm">
+                                <input type="hidden" name="schedule_id" value="<%= schedule.id %>">
+                                <input type="hidden" name="seat_number" id="selectedSeatInput">
+
+                                <!-- Selected Seat Display -->
+                                <div class="text-center mb-4 p-3 bg-light rounded">
+                                    <div class="fs-5 text-muted">Selected Seat</div>
+                                    <div id="selectedSeatDisplay" class="fs-1 fw-bold text-primary">--</div>
+                                </div>
+
+                                <!-- Passenger Information -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">
+                                        <i class="ri-user-line me-2"></i>Passenger Name
+                                    </label>
+                                    <input type="text" class="form-control" name="passenger_name" 
+                                           placeholder="Enter full name" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">
+                                        <i class="ri-phone-line me-2"></i>Phone Number
+                                    </label>
+                                    <input type="tel" class="form-control" name="passenger_phone" 
+                                           placeholder="Enter phone number" required>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold">
+                                        <i class="ri-bank-card-line me-2"></i>Payment Method
+                                    </label>
+                                    <select class="form-select" name="payment_method" required>
+                                        <option value="">Select payment method</option>
+                                        <option value="cash">Cash at Terminal</option>
+                                        <option value="telebirr">Telebirr</option>
+                                        <option value="cbe_birr">CBE Birr</option>
+                                    </select>
+                                </div>
+
+                                <!-- Price Summary -->
+                                <div class="border-top pt-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Ticket Price:</span>
+                                        <span class="fw-bold">ETB <%= parseFloat(schedule.price).toFixed(2) %></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between fs-5 fw-bold text-primary">
+                                        <span>Total:</span>
+                                        <span>ETB <%= parseFloat(schedule.price).toFixed(2) %></span>
+                                    </div>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <div class="d-grid mt-4">
+                                    <button type="submit" class="btn btn-primary btn-lg py-3 fw-bold" 
+                                            id="bookBtn" disabled>
+                                        <i class="ri-check-double-line me-2"></i>
+                                        Confirm Booking
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const scheduleId = '<%= schedule.id %>';
+            const seatMapContainer = document.getElementById('seat-map-container');
+            const selectedSeatDisplay = document.getElementById('selectedSeatDisplay');
+            const selectedSeatInput = document.getElementById('selectedSeatInput');
+            const bookBtn = document.getElementById('bookBtn');
+
+            let selectedSeat = null;
+
+            loadSeatMap(); // Call the function to load the seat map
+
+            async function loadSeatMap() {
+                try {
+                    const response = await fetch(`/api/seats/${scheduleId}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+
+                    if (data.success) {
+                        renderSeatMap(data);
+                    } else {
+                        seatMapContainer.innerHTML = `<p class="text-danger text-center">Error: ${data.message || 'Could not load seat map.'}</p>`;
+                    }
+                } catch (error) {
+                    console.error('Error loading seat map:', error);
+                    seatMapContainer.innerHTML = `<p class="text-danger text-center">Failed to load seat map. Please try again later.</p>`;
+                }
+            }
+
+            function renderSeatMap(data) {
+                let html = `
+                    <div class="bus-container">
+                        <div class="driver-section">
+                            <i class="ri-steering-2-fill fs-4 me-2"></i>
+                            <span class="fw-bold">DRIVER'S CABIN</span>
+                        </div>
+                `;
+
+                // Create each row of seats
+                data.seatLayout.forEach(row => {
+                    html += `
+                        <div class="seat-row">
+                            <div class="row-label">Row ${row.rowNumber}</div>
+                            <div class="seat-group">
+                    `;
+                    
+                    // Left side seats
+                    row.seats.filter(seat => seat.position === 'left').forEach(seat => {
+                        const isBooked = data.bookedSeats.includes(seat.number);
+                        html += createSeatHTML(seat.number, isBooked);
+                    });
+
+                    html += `</div><div class="aisle">AISLE</div><div class="seat-group">`;
+
+                    // Right side seats
+                    row.seats.filter(seat => seat.position === 'right').forEach(seat => {
+                        const isBooked = data.bookedSeats.includes(seat.number);
+                        html += createSeatHTML(seat.number, isBooked);
+                    });
+
+                    html += `</div></div>`;
+                });
+
+                html += `</div>`;
+                seatMapContainer.innerHTML = html;
+
+                // Add click event listeners
+                document.querySelectorAll('.seat.available').forEach(seat => {
+                    seat.addEventListener('click', function() {
+                        const seatNumber = this.getAttribute('data-seat');
+                        selectSeat(this, seatNumber);
+                    });
+                });
+            }
+
+            function createSeatHTML(seatNumber, isBooked) {
+                const seatClass = isBooked ? 'booked' : 'available';
+                return `<div class="seat ${seatClass}" data-seat="${seatNumber}">${seatNumber}</div>`;
+            }
+
+            function selectSeat(seatElement, seatNumber) {
+                // Deselect previous seat
+                if (selectedSeat) {
+                    selectedSeat.classList.remove('selected');
+                    selectedSeat.classList.add('available');
+                }
+
+                // Select new seat
+                selectedSeat = seatElement;
+                selectedSeat.classList.remove('available');
+                selectedSeat.classList.add('selected');
+
+                // Update form
+                selectedSeatDisplay.textContent = seatNumber;
+                selectedSeatInput.value = seatNumber;
+                bookBtn.disabled = false;
+            }
+
+            // Handle form submission
+            document.getElementById('bookingForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                if (!selectedSeatInput.value) {
+                    alert('Please select a seat first!');
+                    return;
+                }
+
+                // Collect form data
+                const formData = {
+                    schedule_id: this.schedule_id.value,
+                    seat_number: this.seat_number.value,
+                    passenger_name: this.passenger_name.value,
+                    passenger_phone: this.passenger_phone.value,
+                    payment_method: this.payment_method.value
+                };
+
+                try {
+                    bookBtn.disabled = true; // Disable button to prevent multiple submissions
+                    bookBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Booking...';
+
+                    const response = await fetch('/booking', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(formData),
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        window.location.href = `/booking-success?ref=${result.bookingRef}`;
+                    } else {
+                        alert(result.message || 'Booking failed. Please try again.');
+                        bookBtn.disabled = false;
+                        bookBtn.innerHTML = '<i class="ri-check-double-line me-2"></i> Confirm Booking';
+                    }
+                } catch (error) {
+                    console.error('Error during booking:', error);
+                    alert('An error occurred during booking. Please try again later.');
+                    bookBtn.disabled = false;
+                    bookBtn.innerHTML = '<i class="ri-check-double-line me-2"></i> Confirm Booking';
+                }
+            });
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

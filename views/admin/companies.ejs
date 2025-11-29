@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/admin/dashboard">
+                <i class="ri-bus-line me-2"></i>T BUS Admin
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                        <i class="ri-user-line me-1"></i><%= admin.name %>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="/admin/profile"><i class="ri-user-settings-line me-2"></i>Profile</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form method="POST" action="/admin/logout" class="d-inline">
+                                <button type="submit" class="dropdown-item">
+                                    <i class="ri-logout-box-line me-2"></i>Logout
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 bg-light vh-100 p-0">
+                <div class="list-group list-group-flush">
+                    <a href="/admin/dashboard" class="list-group-item list-group-item-action">
+                        <i class="ri-dashboard-line me-2"></i>Dashboard
+                    </a>
+                    <a href="/admin/companies" class="list-group-item list-group-item-action active">
+                        <i class="ri-building-line me-2"></i>Companies
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>Manage Companies</h2>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCompanyModal">
+                        <i class="ri-add-line me-2"></i>Add Company
+                    </button>
+                </div>
+                
+                <div class="row g-4">
+                    <% if (companies.length === 0) { %>
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body text-center py-5">
+                                    <i class="ri-building-line text-muted" style="font-size: 4rem;"></i>
+                                    <h4 class="mt-3 mb-2">No companies found</h4>
+                                    <p class="text-muted mb-4">Add your first bus company to get started</p>
+                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCompanyModal">
+                                        <i class="ri-add-line me-2"></i>Add Company
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    <% } else { %>
+                        <% companies.forEach(company => { %>
+                            <div class="col-md-6 col-lg-4" id="company-<%= company.id %>">
+                                <div class="card border-0 shadow-sm h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-start justify-content-between mb-3">
+                                            <div class="flex-grow-1">
+                                                <h5 class="fw-bold mb-1"><%= company.company_name %></h5>
+                                                <% if (company.contact_person_name) { %>
+                                                    <p class="text-muted mb-1">
+                                                        <i class="ri-user-line me-1"></i><%= company.contact_person_name %>
+                                                    </p>
+                                                <% } %>
+                                                <% if (company.contact_phone) { %>
+                                                    <p class="text-muted mb-0">
+                                                        <i class="ri-phone-line me-1"></i><%= company.contact_phone %>
+                                                    </p>
+                                                <% } %>
+                                            </div>
+                                            <span class="badge status-badge <%= company.is_active ? 'bg-success' : 'bg-danger' %>">
+                                                <%= company.is_active ? 'Active' : 'Inactive' %>
+                                            </span>
+                                        </div>
+                                        
+                                        <% if (company.description) { %>
+                                            <p class="text-muted small mb-3"><%= company.description %></p>
+                                        <% } %>
+                                        
+                                        <% if (company.email) { %>
+                                            <p class="text-muted small mb-2">
+                                                <i class="ri-mail-line me-1"></i><%= company.email %>
+                                            </p>
+                                        <% } %>
+                                        
+                                        <div class="d-flex gap-1">
+                                            <button type="button" class="btn btn-outline-primary btn-sm btn-edit" 
+                                                    data-bs-toggle="modal" data-bs-target="#editCompanyModal"
+                                                    data-company='<%- JSON.stringify(company) %>'>
+                                                <i class="ri-edit-line"></i> Edit
+                                            </button>
+                                            <button class="btn btn-outline-warning btn-sm btn-toggle" 
+                                                    data-entity="company" data-id="<%= company.id %>">
+                                                <i class="ri-refresh-line"></i> Toggle
+                                            </button>
+                                            <button class="btn btn-outline-danger btn-sm btn-delete" 
+                                                    data-entity="company" data-id="<%= company.id %>">
+                                                <i class="ri-delete-bin-line"></i> Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Company Modal -->
+    <div class="modal fade" id="addCompanyModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Company</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="/admin/companies/add">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Company Name *</label>
+                            <input type="text" class="form-control" name="company_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contact Person</label>
+                            <input type="text" class="form-control" name="contact_person_name">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contact Phone</label>
+                            <input type="tel" class="form-control" name="contact_phone">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="description" rows="3"></textarea>
+                        </div>
+                        <hr>
+                        <h6>Partner Login Credentials</h6>
+                        <div class="mb-3">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-control" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password *</label>
+                            <input type="password" class="form-control" name="password" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Company</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Company Modal -->
+    <div class="modal fade" id="editCompanyModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Company</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST"> <!-- Action will be set by JS -->
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Company Name *</label>
+                            <input type="text" class="form-control" name="company_name" id="edit_company_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contact Person</label>
+                            <input type="text" class="form-control" name="contact_person_name" id="edit_contact_person_name">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contact Phone</label>
+                            <input type="tel" class="form-control" name="contact_phone" id="edit_contact_phone">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="description" id="edit_description" rows="3"></textarea>
+                        </div>
+                        <hr>
+                        <h6>Partner Login Credentials</h6>
+                        <div class="mb-3">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-control" name="email" id="edit_email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">New Password</label>
+                            <input type="password" class="form-control" name="password" placeholder="Leave empty to keep current password">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container for notifications -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11" id="toast-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Load the custom admin script -->
+    <script src="/js/admin.js"></script>
+</body>
+</html>

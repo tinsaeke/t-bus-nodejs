@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #7c3aed;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --gray: #64748b;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #ffffff;
+        }
+        
+        body[data-lang="am"] {
+            font-family: 'Noto Sans Ethiopic', 'Inter', sans-serif;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top bg-white shadow-sm py-3">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="ri-bus-line me-2"></i>T BUS
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active fw-semibold" href="/"><%= t.home %></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fw-semibold" href="#routes"><%= t.popular_routes %></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fw-semibold" href="#features"><%= t.features %></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fw-semibold" href="/manage-booking"><%= t.track_ticket %></a>
+                    </li>
+                </ul>
+                
+                <div class="d-flex align-items-center">
+                    <div class="dropdown me-2">
+                        <button class="btn btn-outline-secondary dropdown-toggle btn-sm" type="button" data-bs-toggle="dropdown">
+                            <i class="ri-global-line me-1"></i><%= currentLang === 'am' ? 'አማርኛ' : 'English' %>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/lang/en">English</a></li>
+                            <li><a class="dropdown-item" href="/lang/am">አማርኛ</a></li>
+                        </ul>
+                    </div>
+                    <% if (user) { %>
+                        <!-- Show Dashboard and Logout if user is logged in -->
+                        <% if (user.role === 'super_admin' || user.role === 'admin') { %>
+                            <a href="/admin/dashboard" class="btn btn-outline-primary me-2">Dashboard</a>
+                        <% } else { %>
+                            <a href="/partner/dashboard" class="btn btn-outline-primary me-2">Dashboard</a>
+                        <% } %>
+                        <a href="/logout" class="btn btn-primary">
+                            <i class="ri-logout-box-r-line me-1"></i>Logout
+                        </a>
+                    <% } else { %>
+                        <!-- Show Login and Support if user is not logged in -->
+                        <a href="/login" class="btn btn-outline-primary me-2">
+                            <i class="ri-user-line me-1"></i><%= t.login %>
+                        </a>
+                        <a href="#contact" class="btn btn-primary"><i class="ri-phone-line me-1"></i><%= t.support %></a>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section with Search -->
+    <section class="hero-section position-relative overflow-hidden" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding-top: 120px; padding-bottom: 80px;">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 mb-5 mb-lg-0">
+                    <h1 class="display-4 fw-bold text-white mb-4">
+                        <%= t.title %>
+                    </h1>
+                    <p class="lead text-light mb-5">
+                        <%= t.subtitle %>
+                    </p>
+                </div>
+              
+                <!-- Search Form -->
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-lg rounded-3">
+                        <div class="card-body p-4">
+                            <h4 class="card-title text-center mb-4">
+                                <i class="fas fa-search me-2 text-primary"></i><%= t.search_book %>
+                            </h4>
+                            
+                            <form action="/search" method="GET" id="searchForm">
+                                <div class="row g-3">
+                                    <!-- From City -->
+                                    <div class="col-12">
+                                        <label class="form-label fw-semibold"><%= t.from_city %></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0">
+                                                <i class="fas fa-map-pin text-primary"></i>
+                                            </span>
+                                            <select class="form-select border-start-0" name="from_city" required>
+                                                <option value="">Select departure city</option>
+                                                <% cities.forEach(city => { %>
+                                                    <option value="<%= city.id %>"><%= city.name %></option>
+                                                <% }); %>
+                                            </select>
+                                            <button type="button" class="btn btn-outline-secondary" onclick="swapCities()">
+                                                <i class="fas fa-exchange-alt"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- To City -->
+                                    <div class="col-12">
+                                        <label class="form-label fw-semibold"><%= t.to_city %></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0">
+                                                <i class="fas fa-map-pin-fill text-danger"></i>
+                                            </span>
+                                            <select class="form-select border-start-0" name="to_city" required>
+                                                <option value="">Select destination city</option>
+                                                <% cities.forEach(city => { %>
+                                                    <option value="<%= city.id %>"><%= city.name %></option>
+                                                <% }); %>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Travel Date -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold"><%= t.travel_date %></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0">
+                                                <i class="fas fa-calendar text-primary"></i>
+                                            </span>
+                                            <input type="date" class="form-control border-start-0" name="travel_date" 
+                                                   min="<%= new Date().toISOString().split('T')[0] %>" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Passengers -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold"><%= t.passengers %></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0">
+                                                <i class="fas fa-user text-primary"></i>
+                                            </span>
+                                            <select class="form-select border-start-0" name="passengers">
+                                                <option value="1">1 Passenger</option>
+                                                <option value="2">2 Passengers</option>
+                                                <option value="3">3 Passengers</option>
+                                                <option value="4">4 Passengers</option>
+                                                <option value="5">5 Passengers</option>
+                                                <option value="6">6 Passengers</option>
+                                                <option value="7">7 Passengers</option>
+                                                <option value="8">8 Passengers</option>
+                                                <option value="9">9 Passengers</option>
+                                                <option value="10">10 Passengers</option>
+                                                <option value="15">15 Passengers</option>
+                                                <option value="20">20 Passengers</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Submit Button -->
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-semibold">
+                                            <i class="fas fa-search me-2"></i><%= t.search_buses %>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trust Indicators -->
+    <section class="py-4 bg-light">
+        <div class="container">
+            <div class="row g-4 text-center">
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <i class="ri-user-line fs-2 text-primary me-3"></i>
+                        <div class="text-start">
+                            <h4 class="fw-bold mb-0">50,000+</h4>
+                            <small class="text-muted"><%= t.happy_travelers %></small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <i class="ri-building-2-line fs-2 text-success me-3"></i>
+                        <div class="text-start">
+                            <h4 class="fw-bold mb-0">50+</h4>
+                            <small class="text-muted"><%= t.bus_partners %></small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <i class="ri-map-pin-line fs-2 text-warning me-3"></i>
+                        <div class="text-start">
+                            <h4 class="fw-bold mb-0">25+</h4>
+                            <small class="text-muted"><%= t.cities_covered %></small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <i class="ri-star-line fs-2 text-danger me-3"></i>
+                        <div class="text-start">
+                            <h4 class="fw-bold mb-0">4.8/5</h4>
+                            <small class="text-muted"><%= t.customer_rating %></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Popular Routes -->
+    <section id="routes" class="py-5 bg-white">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold mb-3"><%= t.popular_routes %> in Ethiopia</h2>
+                <p class="lead text-muted">Discover the most traveled routes across the country</p>
+            </div>
+            
+            <div class="row g-4" id="popularRoutes">
+                <% if (popularRoutes && popularRoutes.length > 0) { %>
+                    <% popularRoutes.forEach((route, index) => { %>
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body text-center p-4">
+                                    <i class="ri-route-line text-<%= index % 3 === 0 ? 'primary' : index % 3 === 1 ? 'success' : 'warning' %> fs-1 mb-3"></i>
+                                    <h5 class="fw-bold"><%= route.from_city %> → <%= route.to_city %></h5>
+                                    <p class="text-muted mb-3"><%= route.route_count %> daily trips</p>
+                                    <span class="badge bg-<%= index % 3 === 0 ? 'primary' : index % 3 === 1 ? 'success' : 'warning' %>">From ETB <%= route.min_price %></span>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="col-12 text-center">
+                        <p class="text-muted">No routes available at this time</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="py-5 bg-light">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold mb-3"><%= t.how_it_works %></h2>
+                <p class="lead text-muted"><%= t.how_subtitle %></p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100 text-center p-4 how-it-works-card">
+                        <div class="card-body">
+                            <div class="icon-wrapper bg-primary rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                <i class="ri-search-line text-white fs-2"></i>
+                            </div>
+                            <h4 class="fw-bold mb-3"><%= t.step_search %></h4>
+                            <p class="text-muted">Enter your departure and destination cities, travel date, and number of passengers</p>
+                            <span class="badge bg-primary rounded-pill">Step 1</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100 text-center p-4 how-it-works-card">
+                        <div class="card-body">
+                            <div class="icon-wrapper bg-success rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                <i class="ri-ticket-line text-white fs-2"></i>
+                            </div>
+                            <h4 class="fw-bold mb-3"><%= t.step_book %></h4>
+                            <p class="text-muted">Choose your preferred bus, select seats, and proceed to secure payment</p>
+                            <span class="badge bg-success rounded-pill">Step 2</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100 text-center p-4 how-it-works-card">
+                        <div class="card-body">
+                            <div class="icon-wrapper bg-warning rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                <i class="ri-road-map-line text-white fs-2"></i>
+                            </div>
+                            <h4 class="fw-bold mb-3"><%= t.step_travel %></h4>
+                            <p class="text-muted">Receive e-ticket, show it at boarding, and enjoy your comfortable journey</p>
+                            <span class="badge bg-warning rounded-pill">Step 3</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-5 bg-white">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 mb-5 mb-lg-0">
+                    <h2 class="display-5 fw-bold mb-4"><%= t.why_choose %></h2>
+                    <p class="lead text-muted mb-5">We're revolutionizing bus travel in Ethiopia with technology and customer-centric approach</p>
+                    
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <i class="ri-shield-check-line text-success fs-2"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h5 class="fw-bold"><%= t.secure_booking %></h5>
+                                    <p class="text-muted mb-0">Your payments and data are protected with bank-level security</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <i class="ri-24-hours-line text-primary fs-2"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h5 class="fw-bold"><%= t.support_24_7 %></h5>
+                                    <p class="text-muted mb-0">Round-the-clock customer support for all your travel needs</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <i class="ri-smartphone-line text-info fs-2"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h5 class="fw-bold"><%= t.mobile_friendly %></h5>
+                                    <p class="text-muted mb-0">Book tickets seamlessly on any device, anywhere</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <i class="ri-refund-line text-warning fs-2"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h5 class="fw-bold"><%= t.easy_cancellation %></h5>
+                                    <p class="text-muted mb-0">Flexible cancellation policies with quick refunds</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <div class="position-relative">
+                        <img src="https://images.unsplash.com/photo-1570125909232-eb263c188f7e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                             alt="Bus Travel in Ethiopian Landscape" class="img-fluid rounded-3 shadow-lg">
+                        <div class="position-absolute bottom-0 start-0 m-4">
+                            <div class="card bg-primary text-white border-0 shadow">
+                                <div class="card-body p-3">
+                                    <h5 class="mb-1">Ready to Travel?</h5>
+                                    <p class="mb-0 small">Book your next adventure today</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section id="testimonials" class="py-5 bg-light">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold mb-3">What Travelers Say</h2>
+                <p class="lead text-muted">Join thousands of satisfied customers across Ethiopia</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <div class="d-flex mb-3">
+                                <i class="ri-star-fill text-warning"></i>
+                                <i class="ri-star-fill text-warning"></i>
+                                <i class="ri-star-fill text-warning"></i>
+                                <i class="ri-star-fill text-warning"></i>
+                                <i class="ri-star-fill text-warning"></i>
+                            </div>
+                            <p class="text-muted mb-3">"T BUS made my travel from Addis to Hawassa so easy. Clean buses and professional service!"</p>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="ri-user-line text-white"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <h6 class="mb-0">Almaz Tadesse</h6>
+                                    <small class="text-muted">Business Traveler</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <div class="d-flex mb-3">
+                                <i class="ri-star-fill text-warning"></i>
+                                <i class="ri-star-fill text-warning"></i>
+                                <i class="ri-star-fill text-warning"></i>
+                                <i class="ri-star-fill text-warning"></i>
+                                <i class="ri-star-fill text-warning"></i>
+                            </div>
+                            <p class="text-muted mb-3">"Best online booking platform in Ethiopia. Quick, reliable, and affordable prices."</p>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-success rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="ri-user-line text-white"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <h6 class="mb-0">Dawit Mekonnen</h6>
+                                    <small class="text-muted">Student</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <div class="d-flex mb-3">
+                                <i class="ri-star-fill text-warning"></i>
+                                <i class="ri-star-fill text-warning"></i>
+                                <i class="ri-star-fill text-warning"></i>
+                                <i class="ri-star-fill text-warning"></i>
+                                <i class="ri-star-fill text-warning"></i>
+                            </div>
+                            <p class="text-muted mb-3">"Family trip to Bahir Dar was perfect. Great customer service and comfortable journey."</p>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-info rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="ri-user-line text-white"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <h6 class="mb-0">Sara Ahmed</h6>
+                                    <small class="text-muted">Family Traveler</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-5 bg-primary text-white">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8 mb-4 mb-lg-0">
+                    <h2 class="display-6 fw-bold mb-3">Ready to Start Your Journey?</h2>
+                    <p class="lead mb-0">Download our mobile app or book directly through our website</p>
+                </div>
+                <div class="col-lg-4">
+                    <div class="d-flex gap-3 justify-content-lg-end">
+                        <a href="#" class="btn btn-light btn-lg px-4">
+                            <i class="ri-google-play-line me-2"></i>Play Store
+                        </a>
+                        <a href="#" class="btn btn-outline-light btn-lg px-4">
+                            <i class="ri-apple-line me-2"></i>App Store
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact" class="bg-dark text-white py-5">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <h5 class="fw-bold mb-4">
+                        <i class="ri-bus-line me-2"></i>T BUS
+                    </h5>
+                    <p class="text-light mb-4">Ethiopia's leading online bus ticketing platform, connecting travelers with trusted bus companies nationwide.</p>
+                    <div class="d-flex gap-3">
+                        <a href="#" class="text-light fs-5"><i class="ri-facebook-fill"></i></a>
+                        <a href="#" class="text-light fs-5"><i class="ri-twitter-fill"></i></a>
+                        <a href="#" class="text-light fs-5"><i class="ri-instagram-line"></i></a>
+                        <a href="#" class="text-light fs-5"><i class="ri-linkedin-fill"></i></a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-2 col-md-4">
+                    <h6 class="fw-bold mb-4">Quick Links</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="/" class="text-light text-decoration-none">Home</a></li>
+                        <li class="mb-2"><a href="#routes" class="text-light text-decoration-none">Popular Routes</a></li>
+                        <li class="mb-2"><a href="#how-it-works" class="text-light text-decoration-none">How It Works</a></li>
+                        <li class="mb-2"><a href="#contact" class="text-light text-decoration-none">Contact</a></li>
+                        <li class="mb-2"><a href="/manage-booking" class="text-light text-decoration-none">Track Ticket</a></li>
+                        <li class="mb-2"><a href="#" class="text-light text-decoration-none" data-bs-toggle="modal" data-bs-target="#downloadAppModal">Mobile App</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-3 col-md-4">
+                    <h6 class="fw-bold mb-4">Support</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="tel:+251911223344" class="text-light text-decoration-none">
+                            <i class="ri-phone-line me-2"></i>+251 911 223344
+                        </a></li>
+                        <li class="mb-2"><a href="mailto:support@tbus.et" class="text-light text-decoration-none">
+                            <i class="ri-mail-line me-2"></i>support@tbus.et
+                        </a></li>
+                        <li class="mb-2"><a href="#" class="text-light text-decoration-none">
+                            <i class="ri-customer-service-2-line me-2"></i>Help Center
+                        </a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-3 col-md-4">
+                    <h6 class="fw-bold mb-4">Newsletter</h6>
+                    <p class="text-light small mb-3">Subscribe for travel deals and updates</p>
+                    <div class="input-group mb-3">
+                        <input type="email" class="form-control" placeholder="Your email" id="newsletterEmail">
+                        <button class="btn btn-primary" type="button" onclick="subscribeNewsletter()">
+                            <i class="ri-send-plane-line"></i>
+                        </button>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="#" class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#downloadAppModal">
+                            <i class="ri-smartphone-line me-1"></i>Get App
+                        </a>
+                        <a href="tel:+251911223344" class="btn btn-outline-light btn-sm">
+                            <i class="ri-phone-line me-1"></i>Call Us
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <hr class="my-4 border-secondary">
+            
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 text-light small">&copy; 2024 T BUS. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="d-flex gap-4 justify-content-md-end">
+                        <a href="#" class="text-light small text-decoration-none">Privacy Policy</a>
+                        <a href="#" class="text-light small text-decoration-none">Terms of Service</a>
+                        <a href="#" class="text-light small text-decoration-none">Cookie Policy</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mobile App Download Modal -->
+    <div class="modal fade" id="downloadAppModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title"><i class="ri-smartphone-line me-2"></i>Download T BUS App</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="mb-4">
+                        <i class="ri-smartphone-line display-1 text-primary"></i>
+                    </div>
+                    <h6 class="mb-3">Get the T BUS mobile app for faster booking!</h6>
+                    <p class="text-muted mb-4">Book tickets, track buses, and manage your trips on the go.</p>
+                    
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <a href="#" class="btn btn-dark w-100">
+                                <i class="ri-google-play-line me-2"></i>Play Store
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="#" class="btn btn-dark w-100">
+                                <i class="ri-apple-line me-2"></i>App Store
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <div class="row g-2 text-start">
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <i class="ri-check-line text-success me-1"></i>Offline ticket access
+                                </small>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <i class="ri-check-line text-success me-1"></i>Push notifications
+                                </small>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <i class="ri-check-line text-success me-1"></i>Real-time tracking
+                                </small>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <i class="ri-check-line text-success me-1"></i>Exclusive deals
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    
+    <style>
+        .how-it-works-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .how-it-works-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+        }
+    </style>
+    
+    <script>
+        // Initialize AOS animations
+        AOS.init({
+            duration: 1000,
+            once: true,
+            offset: 100
+        });
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+        
+        // Swap cities function
+        function swapCities() {
+            const fromCity = document.querySelector('select[name="from_city"]');
+            const toCity = document.querySelector('select[name="to_city"]');
+            
+            const temp = fromCity.value;
+            fromCity.value = toCity.value;
+            toCity.value = temp;
+        }
+        
+        // Set minimum date to today
+        document.querySelector('input[name="travel_date"]').min = new Date().toISOString().split('T')[0];
+        
+        // Auto-suggest popular routes
+        const popularRoutes = <%- JSON.stringify(popularRoutes || []) %>;
+        
+        function suggestRoute(fromCityId) {
+            const suggestions = popularRoutes.filter(route => 
+                route.from_city_id == fromCityId
+            );
+            
+            if (suggestions.length > 0) {
+                // Show suggestions UI (implement as needed)
+                console.log('Suggested destinations:', suggestions);
+            }
+        }
+        
+        // Newsletter subscription
+        async function subscribeNewsletter() {
+            const email = document.getElementById('newsletterEmail').value;
+            if (!email) {
+                alert('Please enter your email address');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/subscribe-newsletter', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('Thank you for subscribing to our newsletter!');
+                    document.getElementById('newsletterEmail').value = '';
+                } else {
+                    alert('Subscription failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Newsletter subscription error:', error);
+                alert('Subscription failed. Please try again.');
+            }
+        }
+        
+        // Show app download modal on mobile
+        if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            setTimeout(() => {
+                if (!localStorage.getItem('appModalShown')) {
+                    const modal = new bootstrap.Modal(document.getElementById('downloadAppModal'));
+                    modal.show();
+                    localStorage.setItem('appModalShown', 'true');
+                }
+            }, 5000);
+        }
+        
+        // Set body language attribute for CSS styling
+        document.body.setAttribute('data-lang', '<%= currentLang %>');
+        
+        // Update language display in dropdown
+        const langButton = document.querySelector('.dropdown-toggle');
+        if (langButton && '<%= currentLang %>' === 'am') {
+            document.documentElement.setAttribute('dir', 'ltr'); // Amharic is LTR
+        }
+    </script>
+</body>
+</html>

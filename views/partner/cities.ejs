@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/partner/dashboard">
+                <i class="ri-bus-line me-2"></i>T BUS Partner
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                        <i class="ri-building-line me-1"></i><%= partner.company_name %>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><span class="dropdown-item-text"><%= partner.full_name %></span></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form method="POST" action="/partner/logout" class="d-inline">
+                                <button type="submit" class="dropdown-item">
+                                    <i class="ri-logout-box-line me-2"></i>Logout
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3 col-lg-2 bg-light vh-100 p-0">
+                <div class="list-group list-group-flush">
+                    <a href="/partner/dashboard" class="list-group-item list-group-item-action">
+                        <i class="ri-dashboard-line me-2"></i>Dashboard
+                    </a>
+                    <a href="/partner/buses" class="list-group-item list-group-item-action">
+                        <i class="ri-bus-line me-2"></i>My Buses
+                    </a>
+                    <a href="/partner/schedules" class="list-group-item list-group-item-action">
+                        <i class="ri-calendar-line me-2"></i>Schedules
+                    </a>
+                    <a href="/partner/bookings" class="list-group-item list-group-item-action">
+                        <i class="ri-ticket-line me-2"></i>Bookings
+                    </a>
+                    <a href="/partner/cities" class="list-group-item list-group-item-action active">
+                        <i class="ri-map-pin-line me-2"></i>Cities
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-md-9 col-lg-10 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>Manage My Operating Cities</h2>
+                </div>
+
+                <div class="row">
+                    <!-- My Cities -->
+                    <div class="col-md-7">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header">
+                                <h5 class="mb-0">My Cities</h5>
+                            </div>
+                            <div class="card-body">
+                                <% if (myCities.length === 0) { %>
+                                    <p class="text-muted">You have not added any cities yet.</p>
+                                <% } else { %>
+                                    <ul class="list-group">
+                                        <% myCities.forEach(city => { %>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <%= city.name %>
+                                                <div>
+                                                    <button class="btn btn-secondary btn-sm btn-edit-city" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#editCityModal"
+                                                            data-city-id="<%= city.id %>"
+                                                            data-city-name="<%= city.name %>">
+                                                        <i class="ri-pencil-line"></i> Edit
+                                                    </button>
+                                                    <button class="btn btn-danger btn-sm btn-delete" data-entity="city" data-entity-plural="cities" data-id="<%= city.id %>">
+                                                        <i class="ri-delete-bin-line"></i> Remove
+                                                    </button>
+                                                </div>
+                                            </li>
+                                        <% }); %>
+                                    </ul>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add City -->
+                    <div class="col-md-5">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header">
+                                <h5 class="mb-0">Add City to My List</h5>
+                            </div>
+                            <div class="card-body">
+                                <form method="POST" action="/partner/cities/add">
+                                    <div class="mb-3">
+                                        <label class="form-label">Select a City</label>
+                                        <select class="form-select" name="city_id" required>
+                                            <option value="">Choose...</option>
+                                            <% availableCities.forEach(city => { %>
+                                                <option value="<%= city.id %>"><%= city.name %></option>
+                                            <% }); %>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-success w-100">
+                                        <i class="ri-add-line me-2"></i>Add to My List
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="card border-0 shadow-sm mt-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Create a New City</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small">If a city is not in the list above, you can add it to the system here.</p>
+                                <form method="POST" action="/partner/cities/create-and-add">
+                                    <div class="mb-3">
+                                        <label class="form-label">New City Name</label>
+                                        <input type="text" class="form-control" name="new_city_name" placeholder="e.g., Gondar" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="ri-add-circle-line me-2"></i>Create and Add City
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit City Modal -->
+    <div class="modal fade" id="editCityModal" tabindex="-1" aria-labelledby="editCityModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editCityModalLabel">Edit City Name</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editCityForm" method="POST" action="">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="edit_city_name" class="form-label">City Name</label>
+                            <input type="text" class="form-control" id="edit_city_name" name="city_name" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/partner.js"></script> <!-- Ensure this points to the new partner script -->
+</body>
+</html>

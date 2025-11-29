@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/partner/dashboard">
+                <i class="ri-bus-line me-2"></i>T BUS Partner
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                        <i class="ri-building-line me-1"></i><%= partner.company_name %>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><span class="dropdown-item-text"><%= partner.name %></span></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form method="POST" action="/partner/logout" class="d-inline">
+                                <button type="submit" class="dropdown-item">
+                                    <i class="ri-logout-box-line me-2"></i>Logout
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 bg-light vh-100 p-0">
+                <div class="list-group list-group-flush">
+                    <a href="/partner/dashboard" class="list-group-item list-group-item-action">
+                        <i class="ri-dashboard-line me-2"></i>Dashboard
+                    </a>
+                    <a href="/partner/buses" class="list-group-item list-group-item-action">
+                        <i class="ri-bus-line me-2"></i>My Buses
+                    </a>
+                    <a href="/partner/schedules" class="list-group-item list-group-item-action">
+                        <i class="ri-calendar-line me-2"></i>Schedules
+                    </a>
+                    <a href="/partner/bookings" class="list-group-item list-group-item-action active">
+                        <i class="ri-ticket-line me-2"></i>Bookings
+                    </a>
+                    <a href="/partner/cities" class="list-group-item list-group-item-action">
+                        <i class="ri-map-pin-line me-2"></i>Cities
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>My Bookings</h2>
+                    <span class="badge bg-success fs-6"><%= bookings.length %> bookings</span>
+                </div>
+                
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Reference</th>
+                                        <th>Passenger</th>
+                                        <th>Route</th>
+                                        <th>Date</th>
+                                        <th>Bus</th>
+                                        <th>Price</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if (bookings.length === 0) { %>
+                                        <tr>
+                                            <td colspan="7" class="text-center py-4 text-muted">
+                                                <i class="ri-ticket-line fs-2 d-block mb-2"></i>
+                                                No bookings found for your buses
+                                            </td>
+                                        </tr>
+                                    <% } else { %>
+                                        <% bookings.forEach(booking => { %>
+                                            <tr>
+                                                <td>
+                                                    <strong><%= booking.booking_reference %></strong>
+                                                </td>
+                                                <td>
+                                                    <div>
+                                                        <strong><%= booking.passenger_full_name %></strong>
+                                                        <br><small class="text-muted"><%= booking.passenger_phone %></small>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <%= booking.from_city %> → <%= booking.to_city %>
+                                                    <br><small class="text-muted">Seat <%= booking.seat_number %></small>
+                                                </td>
+                                                <td>
+                                                    <%= booking.travel_date %>
+                                                    <br><small class="text-muted"><%= booking.departure_time.substring(0,5) %></small>
+                                                </td>
+                                                <td><%= booking.bus_number %></td>
+                                                <td>ETB <%= booking.total_price %></td>
+                                                <td>
+                                                    <% if (booking.booking_status === 'confirmed') { %>
+                                                        <span class="badge bg-success">Confirmed</span>
+                                                    <% } else if (booking.booking_status === 'cancelled' || booking.booking_status === 'rejected') { %>
+                                                        <span class="badge bg-danger">Cancelled</span>
+                                                    <% } else if (booking.booking_status === 'pending_approval') { %>
+                                                        <span class="badge bg-warning booking-status">Needs Approval</span>
+                                                        <div class="mt-2 booking-actions">
+                                                            <button class="btn btn-success btn-sm me-1 btn-booking-action" 
+                                                                    data-action="approve" data-id="<%= booking.id %>">
+                                                                <i class="ri-check-line"></i> Approve
+                                                            </button>
+                                                            <button class="btn btn-danger btn-sm btn-booking-action"
+                                                                    data-action="reject" data-id="<%= booking.id %>">
+                                                                <i class="ri-close-line"></i> Reject
+                                                            </button>
+                                                        </div>
+                                                    <% } else { %>
+                                                        <span class="badge bg-secondary">Pending</span>
+                                                    <% } %>
+                                                    <br>
+                                                    <small class="text-muted text-capitalize"><%= booking.payment_method %></small>
+                                                </td>
+                                            </tr>
+                                        <% }); %>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container for notifications -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11" id="toast-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Load the custom partner script -->
+    <script src="/js/partner.js"></script>
+</body>
+</html>
