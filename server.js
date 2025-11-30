@@ -3,6 +3,8 @@ const path = require('path');
 const session = require('express-session');
 const helmet = require('helmet');
 const cors = require('cors');
+const pgPool = require('./config/database'); // Import your database pool
+const pgSession = require('connect-pg-simple')(session); // Session store for PostgreSQL
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
@@ -49,6 +51,10 @@ if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
 }
 
 app.use(session({
+  store: new pgSession({
+    pool: pgPool, // Use your existing database pool
+    tableName: 'user_sessions' // Name of the session table
+  }),
   // The secret is required. For production, the check above ensures it's set.
   // For development, we can use a simpler, non-persistent secret.
   secret: process.env.SESSION_SECRET || 'a-temporary-secret-for-dev-only',

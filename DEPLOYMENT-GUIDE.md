@@ -123,15 +123,17 @@ Visit: `http://localhost:3001`
 
 ## 🔐 Default Login Credentials
 
-### Admin Panel (`/admin/login`)
+### Unified Login (`/login`)
 
-- **Email:** admin@tbus.et
-- **Password:** password
+#### Admin
 
-### Partner Portal (`/partner/login`)
+- **Email:** `admin@tbus.et`
+- **Password:** `password`
 
-- **Email:** partner@selam.et
-- **Password:** password
+#### Partner
+
+- **Email:** `partner@selam.et`
+- **Password:** `password`
 
 ## ✨ Features Available
 

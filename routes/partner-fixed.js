@@ -9,51 +9,10 @@ const { companies, cities, buses, schedules } = store;
 // Middleware to check partner authentication
 const requireAuth = (req, res, next) => {
   if (!req.session.partner) {
-    return res.redirect('/partner/login');
+    return res.redirect('/login'); // Redirect to the common login page
   }
   next();
 };
-
-// Login page
-router.get('/login', (req, res) => {
-  res.render('partner/login', { title: 'Partner Login - T BUS', error: null });
-});
-
-// Process login
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-
-  try {
-    const userResult = await pool.query(
-      'SELECT u.*, bc.company_name FROM users u JOIN bus_companies bc ON u.bus_company_id = bc.id WHERE u.email = $1 AND u.user_type = $2 AND bc.is_active = true',
-      [email, 'partner_admin'] // Check if the bus company is active
-    );
-
-    if (userResult.rows.length > 0) {
-      const user = userResult.rows[0];
-      const validPassword = await bcrypt.compare(password, user.password_hash);
-
-      if (validPassword) {
-        req.session.partner = {
-          id: user.id,
-          email: user.email,
-          company_id: user.bus_company_id,
-          company_name: user.company_name,
-          full_name: user.full_name
-        };
-        return res.redirect('/partner/dashboard');
-      }
-    }
-  } catch (error) {
-    console.error('Partner login database error:', error);
-    // Fall through to render the login page with an error
-  }
-
-  res.render('partner/login', {
-    title: 'Partner Login - T BUS',
-    error: 'Invalid credentials or account inactive'
-  });
-});
 
 // Dashboard
 router.get('/dashboard', requireAuth, async (req, res) => {

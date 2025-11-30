@@ -6,47 +6,10 @@ const pool = require('../config/database');
 // Middleware to check admin authentication
 const requireAuth = (req, res, next) => {
   if (!req.session.admin) {
-    return res.redirect('/admin/login');
+    return res.redirect('/login'); // Redirect to the common login page
   }
   next();
 };
-
-// Login page
-router.get('/login', (req, res) => {
-  res.render('admin/login', { title: 'Admin Login - T BUS', error: null });
-});
-
-// Process login
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-
-  try {
-    const userResult = await pool.query(
-      'SELECT * FROM users WHERE email = $1 AND (user_type = $2 OR user_type = $3)',
-      [email, 'super_admin', 'admin']
-    );
-
-    if (userResult.rows.length > 0) {
-      const user = userResult.rows[0];
-      const validPassword = await bcrypt.compare(password, user.password_hash);
-
-      if (validPassword) {
-        req.session.admin = {
-          id: user.id,
-          email: user.email,
-          name: user.full_name
-        };
-        return res.redirect('/admin/dashboard');
-      }
-    }
-
-    // If user not found or password invalid, render login with error
-    return res.render('admin/login', { title: 'Admin Login - T BUS', error: 'Invalid credentials' });
-  } catch (error) {
-    console.error('Login error:', error);
-    return res.render('admin/login', { title: 'Admin Login - T BUS', error: 'An unexpected error occurred. Please try again.' });
-  }
-});
 
 // Dashboard
 router.get('/dashboard', requireAuth, async (req, res) => {
