@@ -11,6 +11,10 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3002;
 
+// Trust the first proxy in front of the app (e.g., Render's load balancer)
+// This is CRITICAL for secure cookies to work in production.
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({
   contentSecurityPolicy: {
