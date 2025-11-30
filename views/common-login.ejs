@@ -42,18 +42,29 @@
 
                 <form action="/login" method="POST">
                     <div class="mb-3">
-                        <label for="email" class="form-label fw-semibold">Email or Username</label>
+                        <label for="email" class="form-label fw-semibold">Email</label> <!-- The 'for' attribute should match the input 'id' -->
                         <div class="input-group">
                             <span class="input-group-text"><i class="ri-user-line"></i></span>
-                            <input type="text" class="form-control" id="email" name="email" placeholder="Enter your email or username" required>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label fw-semibold">Password</label> <!-- The 'for' attribute should match the input 'id' -->
+                        <div class="input-group">
+                             <span class="input-group-text"><i class="ri-lock-line"></i></span>
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        <label for="password" class="form-label fw-semibold">Password</label>
+                        <label for="role" class="form-label fw-semibold">Role</label> <!-- The 'for' attribute should match the select 'id' -->
                         <div class="input-group">
-                             <span class="input-group-text"><i class="ri-lock-line"></i></span>
-                            <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+                            <span class="input-group-text"><i class="ri-user-shield-line"></i></span>
+                            <select class="form-select" id="role" name="role">
+                                <option value="admin" selected>Admin</option> <!-- Set a default selected option -->
+                                <option value="partner">Partner</option>
+                            </select>
                         </div>
                     </div>
 
@@ -63,8 +74,6 @@
                         </button>
                     </div>
                 </form>
-
-                
             </div>
         </div>
     </div>

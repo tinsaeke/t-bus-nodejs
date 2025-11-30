@@ -525,8 +525,13 @@ router.post('/cities/delete/:id', requireAuth, async (req, res) => {
 
 // Logout
 router.post('/logout', (req, res) => {
-  req.session.destroy();
-  res.redirect('/partner/login');
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Partner logout error:', err);
+    }
+    // Redirect to the common login page, not the partner-specific one
+    res.redirect('/login');
+  });
 });
 
 module.exports = router;

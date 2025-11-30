@@ -5,9 +5,10 @@ require('dotenv').config(); // Ensure environment variables are loaded
 const pool = new Pool({
   // Use the connection string from the .env file
   connectionString: process.env.DATABASE_URL,
-  // The ssl=true parameter in the DATABASE_URL will handle SSL.
-  // This object is a good fallback for cloud providers.
-  ssl: { rejectUnauthorized: false }
+  // For production environments, ensure your DATABASE_URL includes `?ssl=true`.
+  // Most cloud providers (like Render, Heroku) require SSL and their connection strings include this.
+  // The `pg` library automatically handles SSL correctly when the connection string is configured properly.
+  // The previous insecure setting `ssl: { rejectUnauthorized: false }` has been removed for security.
 });
 
 // Test connection

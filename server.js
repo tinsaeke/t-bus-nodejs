@@ -42,8 +42,16 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Session configuration
+// In production, it's critical to have a secret. If it's not set, we must exit.
+if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
+  console.error('FATAL ERROR: SESSION_SECRET environment variable is not set.');
+  process.exit(1);
+}
+
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'fallback-secret',
+  // The secret is required. For production, the check above ensures it's set.
+  // For development, we can use a simpler, non-persistent secret.
+  secret: process.env.SESSION_SECRET || 'a-temporary-secret-for-dev-only',
   resave: false,
   saveUninitialized: false,
   cookie: {

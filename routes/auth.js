@@ -64,4 +64,18 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// @route   GET /logout
+// @desc    Destroy session and log user out
+router.get('/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Session destruction error:', err);
+      // Even if there's an error, try to redirect to login
+      return res.redirect('/login');
+    }
+    // Redirect to the common login page after logout
+    res.redirect('/login');
+  });
+});
+
 module.exports = router;

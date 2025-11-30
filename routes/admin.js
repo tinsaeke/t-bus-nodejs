@@ -464,8 +464,13 @@ router.post('/companies/edit/:id', requireAuth, async (req, res) => {
 
 // Logout
 router.post('/logout', (req, res) => {
-  req.session.destroy();
-  res.redirect('/admin/login');
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Admin logout error:', err);
+    }
+    // Redirect to the common login page, not the admin-specific one
+    res.redirect('/login');
+  });
 });
 
 
