@@ -20,7 +20,9 @@
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
                         <i class="ri-user-line me-1"></i><%= admin.name %>
                     </a>
-                    <ul class="dropdown-menu">
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="/admin/profile"><i class="ri-user-settings-line me-2"></i>Profile</a></li>
+                        <li><hr class="dropdown-divider"></li>
                         <li>
                             <a class="dropdown-item" href="/logout">
                                 <i class="ri-logout-box-line me-2"></i>Logout
@@ -82,15 +84,7 @@
                         </div>
                     </div>
                     
-                    <div class="col-md-3">
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-body text-center">
-                                <i class="ri-money-dollar-circle-line text-info fs-1"></i>
-                                <h3 class="mt-2 mb-0">ETB <%= stats.revenue.toLocaleString() %></h3>
-                                <p class="text-muted mb-0">Total Revenue</p>
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
 
                 <!-- Quick Actions -->

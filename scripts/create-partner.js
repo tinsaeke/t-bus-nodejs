@@ -15,6 +15,11 @@ async function createPartner() {
     const email = 'partner@demo.com';
     const password = 'partner123';
     const name = 'Partner Admin';
+
+    if (password.length < 8) {
+      console.error('Error: Password must be at least 8 characters long.');
+      process.exit(1);
+    }
     
     const hashedPassword = await bcrypt.hash(password, 10);
     

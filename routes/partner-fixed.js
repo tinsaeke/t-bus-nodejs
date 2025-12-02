@@ -6,10 +6,12 @@ const pool = require('../config/database');
 const store = require('../data/store');
 const { companies, cities, buses, schedules } = store;
 
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
 // Middleware to check partner authentication
 const requireAuth = (req, res, next) => {
   if (!req.session.partner) {
-    return res.redirect('/login'); // Redirect to the common login page
+    return res.redirect('/login');
   }
   next();
 };
@@ -52,6 +54,64 @@ router.get('/dashboard', requireAuth, async (req, res) => {
   }
 });
 
+// GET profile page
+router.get('/profile', requireAuth, (req, res) => {
+  res.render('partner/profile', {
+    title: 'My Profile - T BUS Partner',
+    partner: req.session.partner,
+    error: null,
+    success: null
+  });
+});
+
+// POST to update profile (email and password)
+router.post('/profile/update', requireAuth, async (req, res) => {
+  const { email, current_password, new_password, confirm_password } = req.body;
+  const partnerId = req.session.partner.id;
+
+  if (!email || !isValidEmail(email)) {
+    return res.render('partner/profile', { title: 'My Profile', partner: req.session.partner, error: 'Invalid email format.', success: null });
+  }
+
+  try {
+    const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [partnerId]);
+    if (userResult.rows.length === 0) {
+      return res.render('partner/profile', { title: 'My Profile', partner: req.session.partner, error: 'User not found.', success: null });
+    }
+
+    const user = userResult.rows[0];
+    const validPassword = await bcrypt.compare(current_password, user.password_hash);
+    if (!validPassword) {
+      return res.render('partner/profile', { title: 'My Profile', partner: req.session.partner, error: 'Incorrect current password.', success: null });
+    }
+
+    if (new_password) {
+      if (new_password !== confirm_password) {
+        return res.render('partner/profile', { title: 'My Profile', partner: req.session.partner, error: 'New passwords do not match.', success: null });
+      }
+      if (new_password.length < 8) {
+        return res.render('partner/profile', { title: 'My Profile', partner: req.session.partner, error: 'Password must be at least 8 characters long.', success: null });
+      }
+      const hashedNewPassword = await bcrypt.hash(new_password, 10);
+      await pool.query('UPDATE users SET email = $1, password_hash = $2 WHERE id = $3', [email, hashedNewPassword, partnerId]);
+    } else {
+      await pool.query('UPDATE users SET email = $1 WHERE id = $2', [email, partnerId]);
+    }
+
+    req.session.partner.email = email;
+
+    res.render('partner/profile', {
+      title: 'My Profile',
+      partner: req.session.partner,
+      error: null,
+      success: 'Profile updated successfully!'
+    });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.render('partner/profile', { title: 'My Profile', partner: req.session.partner, error: 'An error occurred while updating the profile.', success: null });
+  }
+});
+
 // Buses management
 router.get('/buses', requireAuth, async (req, res) => {
   try {
@@ -80,9 +140,13 @@ router.post('/buses/add', requireAuth, async (req, res) => {
   const { bus_number, type, total_seats } = req.body;
   if (bus_number) {
     try {
+      const seats = parseInt(total_seats);
+      if (isNaN(seats) || seats < 1) {
+        return res.redirect('/partner/buses');
+      }
       await pool.query(
         'INSERT INTO buses (bus_company_id, bus_number, type, total_seats) VALUES ($1, $2, $3, $4)',
-        [req.session.partner.company_id, bus_number, type, parseInt(total_seats)]
+        [req.session.partner.company_id, bus_number, type, seats]
       );
     } catch (error) {
       console.error('Error adding bus to database:', error);
@@ -96,11 +160,20 @@ router.post('/buses/edit/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
   const { bus_number, type, total_seats } = req.body;
   const companyId = req.session.partner.company_id;
+  const busId = parseInt(id);
+
+  if (isNaN(busId)) {
+    return res.redirect('/partner/buses');
+  }
 
   try {
+    const seats = parseInt(total_seats);
+    if (isNaN(seats) || seats < 1) {
+      return res.redirect('/partner/buses');
+    }
     await pool.query(
       'UPDATE buses SET bus_number = $1, type = $2, total_seats = $3 WHERE id = $4 AND bus_company_id = $5',
-      [bus_number, type, parseInt(total_seats), id, companyId]
+      [bus_number, type, seats, busId, companyId]
     );
   } catch (error) {
     console.error('Error editing bus:', error);
@@ -124,7 +197,6 @@ router.get('/schedules', requireAuth, async (req, res) => {
     const schedulesResult = await pool.query(schedulesQuery, [partnerId]);
     const companyBusesResult = await pool.query('SELECT * FROM buses WHERE bus_company_id = $1 AND is_active = true', [partnerId]);
 
-    // Get the cities for this partner
     const partnerCitiesResult = await pool.query(
       'SELECT c.name, c.id FROM partner_cities pc JOIN cities c ON c.id = pc.city_id WHERE pc.partner_id = $1 ORDER BY c.name',
       [partnerId]
@@ -150,42 +222,67 @@ router.get('/schedules', requireAuth, async (req, res) => {
   }
 });
 
-// Add schedule
+// Add schedule with conflict validation
 router.post('/schedules/add', requireAuth, async (req, res) => {
   const { bus_id, from_city_id, to_city_id, departure_time, arrival_time, price, travel_date } = req.body;
   try {
     const busResult = await pool.query('SELECT total_seats FROM buses WHERE id = $1 AND bus_company_id = $2', [bus_id, req.session.partner.company_id]);
-    if (busResult.rows.length > 0) {
-      const available_seats = busResult.rows[0].total_seats;
-      const scheduleQuery = `
-        INSERT INTO schedules (bus_id, from_city_id, to_city_id, departure_time, arrival_time, price, travel_date, available_seats)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      `;
-      await pool.query(scheduleQuery, [
-        parseInt(bus_id), parseInt(from_city_id), parseInt(to_city_id),
-        departure_time, arrival_time, parseFloat(price), travel_date, available_seats
-      ]);
-    } else {
+    if (busResult.rows.length === 0) {
       return res.redirect('/partner/schedules?error=Invalid bus selection.');
     }
+
+    const conflictQuery = `
+      SELECT COUNT(*) as count FROM schedules
+      WHERE bus_id = $1 AND travel_date = $2 AND is_active = true
+      AND NOT (arrival_time <= $3 OR departure_time >= $4)
+    `;
+    const conflictResult = await pool.query(conflictQuery, [bus_id, travel_date, departure_time, arrival_time]);
+    
+    if (conflictResult.rows[0].count > 0) {
+      return res.redirect('/partner/schedules?error=Bus is already scheduled for another route at this time.');
+    }
+
+    const available_seats = busResult.rows[0].total_seats;
+    const scheduleQuery = `
+      INSERT INTO schedules (bus_id, from_city_id, to_city_id, departure_time, arrival_time, price, travel_date, available_seats)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `;
+    await pool.query(scheduleQuery, [
+      parseInt(bus_id), parseInt(from_city_id), parseInt(to_city_id),
+      departure_time, arrival_time, parseFloat(price), travel_date, available_seats
+    ]);
   } catch (error) {
     console.error('Error adding schedule to database:', error);
   }
   res.redirect('/partner/schedules');
 });
 
-// Edit schedule
+// Edit schedule with conflict validation
 router.post('/schedules/edit/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
   const { bus_id, from_city_id, to_city_id, departure_time, arrival_time, price, travel_date } = req.body;
   const companyId = req.session.partner.company_id;
+  const scheduleId = parseInt(id);
+
+  if (isNaN(scheduleId)) {
+    return res.redirect('/partner/schedules');
+  }
 
   try {
-    // Verify the bus belongs to the partner
     const busResult = await pool.query('SELECT id FROM buses WHERE id = $1 AND bus_company_id = $2', [bus_id, companyId]);
     if (busResult.rows.length === 0) {
-      // If bus doesn't belong to partner, do not proceed
       return res.redirect('/partner/schedules?error=Invalid bus selection.');
+    }
+
+    const conflictQuery = `
+      SELECT COUNT(*) as count FROM schedules
+      WHERE bus_id = $1 AND travel_date = $2 AND is_active = true AND id != $3
+      AND NOT (arrival_time <= $4 OR departure_time >= $5)
+    `;
+    const conflictResult = await pool.query(conflictQuery, [bus_id, travel_date, scheduleId, departure_time, arrival_time]);
+    
+    if (conflictResult.rows[0].count > 0) {
+      return res.redirect('/partner/schedules?error=Bus is already scheduled for another route at this time.');
     }
 
     const scheduleQuery = `
@@ -207,7 +304,7 @@ router.post('/schedules/edit/:id', requireAuth, async (req, res) => {
       arrival_time,
       parseFloat(price),
       travel_date,
-      id
+      scheduleId
     ]);
   } catch (error) {
     console.error('Error editing schedule:', error);
@@ -218,7 +315,11 @@ router.post('/schedules/edit/:id', requireAuth, async (req, res) => {
 // Delete bus
 router.post('/buses/delete/:id', requireAuth, async (req, res) => {
   try {
-    await pool.query('DELETE FROM buses WHERE id = $1 AND bus_company_id = $2', [req.params.id, req.session.partner.company_id]);
+    const busId = parseInt(req.params.id);
+    if (isNaN(busId)) {
+      return res.status(400).json({ success: false, message: 'Invalid bus ID.' });
+    }
+    await pool.query('DELETE FROM buses WHERE id = $1 AND bus_company_id = $2', [busId, req.session.partner.company_id]);
     res.json({ success: true });
   } catch (error) {
     console.error('Error deleting bus:', error);
@@ -229,7 +330,11 @@ router.post('/buses/delete/:id', requireAuth, async (req, res) => {
 // Toggle bus status
 router.post('/buses/toggle/:id', requireAuth, async (req, res) => {
   try {
-    await pool.query('UPDATE buses SET is_active = NOT is_active WHERE id = $1 AND bus_company_id = $2', [req.params.id, req.session.partner.company_id]);
+    const busId = parseInt(req.params.id);
+    if (isNaN(busId)) {
+      return res.status(400).json({ success: false, message: 'Invalid bus ID.' });
+    }
+    await pool.query('UPDATE buses SET is_active = NOT is_active WHERE id = $1 AND bus_company_id = $2', [busId, req.session.partner.company_id]);
     res.json({ success: true });
   } catch (error) {
     console.error('Error toggling bus status:', error);
@@ -240,11 +345,14 @@ router.post('/buses/toggle/:id', requireAuth, async (req, res) => {
 // Delete schedule
 router.post('/schedules/delete/:id', requireAuth, async (req, res) => {
   try {
-    // Ensure the schedule belongs to the partner's bus
+    const scheduleId = parseInt(req.params.id);
+    if (isNaN(scheduleId)) {
+      return res.status(400).json({ success: false, message: 'Invalid schedule ID.' });
+    }
     const checkQuery = 'SELECT s.id FROM schedules s JOIN buses b ON s.bus_id = b.id WHERE s.id = $1 AND b.bus_company_id = $2';
-    const checkResult = await pool.query(checkQuery, [req.params.id, req.session.partner.company_id]);
+    const checkResult = await pool.query(checkQuery, [scheduleId, req.session.partner.company_id]);
     if (checkResult.rows.length > 0) {
-      await pool.query('DELETE FROM schedules WHERE id = $1', [req.params.id]);
+      await pool.query('DELETE FROM schedules WHERE id = $1', [scheduleId]);
       return res.json({ success: true });
     }
     res.status(403).json({ success: false, message: 'Permission denied.' });
@@ -257,10 +365,14 @@ router.post('/schedules/delete/:id', requireAuth, async (req, res) => {
 // Toggle schedule status
 router.post('/schedules/toggle/:id', requireAuth, async (req, res) => {
   try {
+    const scheduleId = parseInt(req.params.id);
+    if (isNaN(scheduleId)) {
+      return res.status(400).json({ success: false, message: 'Invalid schedule ID.' });
+    }
     const checkQuery = 'SELECT s.id FROM schedules s JOIN buses b ON s.bus_id = b.id WHERE s.id = $1 AND b.bus_company_id = $2';
-    const checkResult = await pool.query(checkQuery, [req.params.id, req.session.partner.company_id]);
+    const checkResult = await pool.query(checkQuery, [scheduleId, req.session.partner.company_id]);
     if (checkResult.rows.length > 0) {
-      await pool.query('UPDATE schedules SET is_active = NOT is_active WHERE id = $1', [req.params.id]);
+      await pool.query('UPDATE schedules SET is_active = NOT is_active WHERE id = $1', [scheduleId]);
       return res.json({ success: true });
     }
     res.status(403).json({ success: false, message: 'Permission denied.' });
@@ -310,12 +422,15 @@ router.get('/bookings', requireAuth, async (req, res) => {
 router.post('/bookings/approve/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    // Additional check to ensure this booking belongs to the partner's company
+    const bookingId = parseInt(id);
+    if (isNaN(bookingId)) {
+      return res.status(400).json({ success: false, message: 'Invalid booking ID.' });
+    }
     const verifyQuery = `SELECT b.id FROM bookings b JOIN schedules s ON b.schedule_id = s.id JOIN buses bus ON s.bus_id = bus.id WHERE b.id = $1 AND bus.bus_company_id = $2`;
-    const verifyResult = await pool.query(verifyQuery, [id, req.session.partner.company_id]);
+    const verifyResult = await pool.query(verifyQuery, [bookingId, req.session.partner.company_id]);
 
     if (verifyResult.rows.length > 0) {
-      await pool.query("UPDATE bookings SET booking_status = 'confirmed', payment_status = 'paid' WHERE id = $1", [id]);
+      await pool.query("UPDATE bookings SET booking_status = 'confirmed', payment_status = 'paid' WHERE id = $1", [bookingId]);
       res.json({ success: true, message: 'Booking approved' });
     } else {
       res.status(403).json({ success: false, message: 'Permission denied' });
@@ -329,11 +444,15 @@ router.post('/bookings/approve/:id', requireAuth, async (req, res) => {
 router.post('/bookings/reject/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
+    const bookingId = parseInt(id);
+    if (isNaN(bookingId)) {
+      return res.status(400).json({ success: false, message: 'Invalid booking ID.' });
+    }
     const verifyQuery = `SELECT b.id, b.schedule_id FROM bookings b JOIN schedules s ON b.schedule_id = s.id JOIN buses bus ON s.bus_id = bus.id WHERE b.id = $1 AND bus.bus_company_id = $2`;
-    const verifyResult = await pool.query(verifyQuery, [id, req.session.partner.company_id]);
+    const verifyResult = await pool.query(verifyQuery, [bookingId, req.session.partner.company_id]);
 
     if (verifyResult.rows.length > 0) {
-      await pool.query("UPDATE bookings SET booking_status = 'cancelled', payment_status = 'failed' WHERE id = $1", [id]);
+      await pool.query("UPDATE bookings SET booking_status = 'cancelled', payment_status = 'failed' WHERE id = $1", [bookingId]);
       await pool.query('UPDATE schedules SET available_seats = available_seats + 1 WHERE id = $1', [verifyResult.rows[0].schedule_id]);
       res.json({ success: true, message: 'Booking rejected' });
     } else {
@@ -350,7 +469,6 @@ router.get('/cities', requireAuth, async (req, res) => {
   try {
     const partnerId = req.session.partner.company_id;
 
-    // Get the cities this partner has already selected, including the partner_cities ID
     const myCitiesQuery = `
       SELECT c.id, c.name FROM cities c
       JOIN partner_cities pc ON c.id = pc.city_id
@@ -361,10 +479,8 @@ router.get('/cities', requireAuth, async (req, res) => {
     const myCities = myCitiesResult.rows;
     const myCityIds = myCities.map(c => c.id);
 
-    // Get all cities from the global table
     const allCitiesResult = await pool.query('SELECT * FROM cities ORDER BY name');
 
-    // Filter the global list to find cities that are not yet selected by the partner
     const availableCities = allCitiesResult.rows.filter(
       city => !myCityIds.includes(city.id)
     );
@@ -392,12 +508,13 @@ router.get('/cities', requireAuth, async (req, res) => {
 router.post('/cities/add', requireAuth, async (req, res) => {
   const { city_id } = req.body;
   const partnerId = req.session.partner.company_id;
+  const cityId = parseInt(city_id);
 
-  if (city_id && partnerId) {
+  if (!isNaN(cityId) && partnerId) {
     try {
       await pool.query(
         'INSERT INTO partner_cities (partner_id, city_id) VALUES ($1, $2) ON CONFLICT (partner_id, city_id) DO NOTHING',
-        [partnerId, city_id]
+        [partnerId, cityId]
       );
     } catch (error) {
       console.error('Error adding city to partner list:', error);
@@ -411,7 +528,7 @@ router.post('/cities/create-and-add', requireAuth, async (req, res) => {
   const { new_city_name } = req.body;
   const partnerId = req.session.partner.company_id;
 
-  if (!new_city_name || !partnerId) {
+  if (!new_city_name || !partnerId || typeof new_city_name !== 'string' || new_city_name.trim().length === 0) {
     return res.redirect('/partner/cities');
   }
 
@@ -419,9 +536,6 @@ router.post('/cities/create-and-add', requireAuth, async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    // First, try to insert the new city.
-    // ON CONFLICT DO NOTHING will prevent errors if the city already exists.
-    // We use ILIKE for a case-insensitive check.
     const insertQuery = `
       INSERT INTO cities (name)
       SELECT $1::varchar
@@ -429,11 +543,9 @@ router.post('/cities/create-and-add', requireAuth, async (req, res) => {
     `;
     await client.query(insertQuery, [new_city_name.trim()]);
 
-    // Now, get the ID of the city (whether it was just inserted or already existed).
     const cityResult = await client.query('SELECT id FROM cities WHERE name ILIKE $1', [new_city_name.trim()]);
     const cityId = cityResult.rows[0].id;
 
-    // Finally, link this city to the partner, ignoring if the link already exists.
     await client.query('INSERT INTO partner_cities (partner_id, city_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [partnerId, cityId]);
 
     await client.query('COMMIT');
@@ -448,16 +560,15 @@ router.post('/cities/create-and-add', requireAuth, async (req, res) => {
 
 // Edit a city name in the main system
 router.post('/cities/edit/:id', requireAuth, async (req, res) => {
-  const cityIdToEdit = req.params.id;
+  const cityIdToEdit = parseInt(req.params.id);
   const { city_name } = req.body;
-  const partnerId = req.session.partner.company_id;
 
-  if (!city_name) {
+  if (isNaN(cityIdToEdit) || !city_name || typeof city_name !== 'string' || city_name.trim().length === 0) {
     return res.redirect('/partner/cities?error=City name cannot be empty.');
   }
 
   try {
-    await pool.query('UPDATE cities SET name = $1 WHERE id = $2', [city_name, cityIdToEdit]);
+    await pool.query('UPDATE cities SET name = $1 WHERE id = $2', [city_name.trim(), cityIdToEdit]);
     res.redirect('/partner/cities');
   } catch (error) {
     console.error('Error editing city name:', error);
@@ -467,8 +578,12 @@ router.post('/cities/edit/:id', requireAuth, async (req, res) => {
 
 // Remove a city from the partner's list
 router.post('/cities/delete/:id', requireAuth, async (req, res) => {
-  const cityIdToRemove = req.params.id; // This is the cities.id
+  const cityIdToRemove = parseInt(req.params.id);
   const partnerId = req.session.partner.company_id;
+
+  if (isNaN(cityIdToRemove)) {
+    return res.status(400).json({ success: false, message: 'Invalid city ID.' });
+  }
 
   try {
     await pool.query(
@@ -488,7 +603,6 @@ router.post('/logout', (req, res) => {
     if (err) {
       console.error('Partner logout error:', err);
     }
-    // Redirect to the common login page, not the partner-specific one
     res.redirect('/login');
   });
 });

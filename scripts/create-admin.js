@@ -6,6 +6,11 @@ async function createAdmin() {
     const email = 'admin@tbus.et';
     const password = 'admin123';
     const name = 'System Administrator';
+
+    if (password.length < 8) {
+      console.error('Error: Password must be at least 8 characters long.');
+      process.exit(1);
+    }
     
     const hashedPassword = await bcrypt.hash(password, 10);
     

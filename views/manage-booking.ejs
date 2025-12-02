@@ -152,7 +152,7 @@
                                                 <button id="mainPrintTicketButton" class="btn btn-success">
                                                     <i class="ri-printer-line me-1"></i>Print Ticket
                                                 </button>
-                                                <button onclick="viewTicketDetails()" class="btn btn-primary">
+                                                <button id="viewDetailsButton" class="btn btn-primary">
                                                     <i class="ri-eye-line me-1"></i>View Details
                                                 </button>
                                             <% } else if (booking.booking_status === 'cancelled') { %>
@@ -166,8 +166,11 @@
                                                 <button class="btn btn-outline-warning" disabled>
                                                     <i class="ri-time-line me-1"></i>Awaiting Approval
                                                 </button>
-                                                <button onclick="refreshStatus()" class="btn btn-outline-primary">
+                                                <button id="refreshStatusButton" class="btn btn-outline-primary">
                                                     <i class="ri-refresh-line me-1"></i>Refresh Status
+                                                </button>
+                                                <button id="cancelBookingButton" class="btn btn-outline-danger">
+                                                    <i class="ri-close-line me-1"></i>Cancel Booking
                                                 </button>
                                             <% } else { %>
                                                 <button class="btn btn-outline-secondary" disabled>
@@ -251,72 +254,8 @@
         </div>
     </div>
 
+    <%- include('partials/footer') %>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function printTicket() {
-            const ticketContent = document.getElementById('ticketContent');
-            if (ticketContent) {
-                const printWindow = window.open('', '_blank');
-                
-                // Get all stylesheet links from the current document
-                const stylesheets = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
-                                         .map(link => link.outerHTML)
-                                         .join('');
-
-                printWindow.document.write(`
-                    <html>
-                        <head>
-                            <title>T-BUS Ticket</title>
-                            ${stylesheets}
-                            <style>
-                                body { font-family: Arial, sans-serif; padding: 20px; }
-                                .text-center { text-align: center; }
-                                .text-primary { color: #2563eb; }
-                                .text-success { color: #10b981; }
-                                .fs-4 { font-size: 1.5rem; }
-                                .row { display: flex; flex-wrap: wrap; }
-                                .col-md-6 { width: 50%; padding: 10px; }
-                                .bg-light { background-color: #f8f9fa; padding: 15px; border-radius: 5px; }
-                                /* Add specific styles for print if needed, overriding or complementing existing styles */
-                                @media print {
-                                    /* Example: Hide elements not relevant to the ticket print */
-                                    .modal-footer { display: none; } 
-                                }
-                            </style>
-                        </head>
-                        <body>
-                            ${ticketContent.innerHTML}
-                        </body>
-                    </html>
-                `);
-                printWindow.document.close();
-                printWindow.print();
-            } else {
-                // Fallback for when ticketContent is not found (shouldn't happen for the modal button)
-                window.print();
-            }
-        }
-        
-        function viewTicketDetails() {
-            const modal = new bootstrap.Modal(document.getElementById('ticketModal'));
-            modal.show();
-        }
-        
-        function refreshStatus() {
-            location.reload();
-        }
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const mainPrintButton = document.getElementById('mainPrintTicketButton');
-            const modalPrintButton = document.getElementById('modalPrintTicketButton');
-
-            if (mainPrintButton) {
-                mainPrintButton.addEventListener('click', printTicket);
-            }
-            if (modalPrintButton) {
-                modalPrintButton.addEventListener('click', printTicket);
-            }
-        });
-    </script>
+    <script src="/js/manage-booking.js"></script>
 </body>
 </html>

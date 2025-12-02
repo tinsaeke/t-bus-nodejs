@@ -3,10 +3,15 @@ const router = express.Router();
 const pool = require('../config/database');
 const bcrypt = require('bcryptjs');
 
+// Email validation helper
+const isValidEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && email.length <= 255;
+};
+
 // @route   GET /login
 // @desc    Show the login page
 router.get('/login', (req, res) => {
-  // Pass an empty error message initially
   res.render('login', { error: null });
 });
 
@@ -15,8 +20,24 @@ router.get('/login', (req, res) => {
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
+  // Input validation
+  if (!email || !password) {
+    return res.render('login', { error: 'Email and password are required.' });
+  }
+
+  if (!isValidEmail(email)) {
+    return res.render('login', { error: 'Invalid email format.' });
+  }
+
+  if (!password || password.length < 1 || password.length > 255) {
+    return res.render('login', { error: 'Invalid password.' });
+  }
+
+  if (typeof password !== 'string') {
+    return res.render('login', { error: 'Invalid password format.' });
+  }
+
   try {
-    // Find user by email. We join bus_companies to get company info for partners.
     const userQuery = `
       SELECT u.*, bc.company_name, bc.is_active as company_is_active
       FROM users u
@@ -36,7 +57,6 @@ router.post('/login', async (req, res) => {
       return res.render('login', { error: 'Invalid credentials. Please try again.' });
     }
 
-    // Check user type and redirect accordingly
     if (user.user_type === 'super_admin' || user.user_type === 'admin') {
       req.session.admin = {
         id: user.id,
@@ -49,14 +69,13 @@ router.post('/login', async (req, res) => {
       req.session.partner = {
         id: user.id,
         email: user.email,
+        name: user.full_name,
         company_id: user.bus_company_id,
-        company_name: user.company_name,
-        full_name: user.full_name
+        company_name: user.company_name
       };
       return res.redirect('/partner/dashboard');
     }
 
-    // If user is a partner but their company is not active, or another role
     res.render('login', { error: 'Your account is inactive or invalid. Please contact support.' });
   } catch (error) {
     console.error('Login error:', error);
@@ -70,10 +89,8 @@ router.get('/logout', (req, res) => {
   req.session.destroy((err) => {
     if (err) {
       console.error('Session destruction error:', err);
-      // Even if there's an error, try to redirect to login
       return res.redirect('/login');
     }
-    // Redirect to the common login page after logout
     res.redirect('/login');
   });
 });
