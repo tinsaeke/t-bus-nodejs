@@ -51,27 +51,28 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(response => response.json())
         .then(data => {
           if (data.success) {
-            const card = this.closest('.card');
-            const statusBadge = card ? card.querySelector('.badge') : null;
-            
-            if (statusBadge) {
-              if (statusBadge.classList.contains('bg-success')) {
-                statusBadge.classList.replace('bg-success', 'bg-secondary');
-                statusBadge.textContent = 'Inactive';
-              } else {
-                statusBadge.classList.replace('bg-secondary', 'bg-success');
-                statusBadge.textContent = 'Active';
+            const row = this.closest('tr');
+            if (row) {
+              const statusBadge = row.querySelector('.status-badge');
+              if (statusBadge) {
+                if (statusBadge.classList.contains('bg-success')) {
+                  statusBadge.classList.replace('bg-success', 'bg-danger');
+                  statusBadge.textContent = 'Inactive';
+                } else {
+                  statusBadge.classList.replace('bg-danger', 'bg-success');
+                  statusBadge.textContent = 'Active';
+                }
               }
             } else {
-              const row = this.closest('tr');
-              const rowBadge = row ? row.querySelector('.status-badge') : null;
-              if (rowBadge) {
-                if (rowBadge.classList.contains('bg-success')) {
-                  rowBadge.classList.replace('bg-success', 'bg-danger');
-                  rowBadge.textContent = 'Inactive';
+              const card = this.closest('.card');
+              const badge = card ? card.querySelector('.badge') : null;
+              if (badge) {
+                if (badge.classList.contains('bg-success')) {
+                  badge.classList.replace('bg-success', 'bg-secondary');
+                  badge.textContent = 'Inactive';
                 } else {
-                  rowBadge.classList.replace('bg-danger', 'bg-success');
-                  rowBadge.textContent = 'Active';
+                  badge.classList.replace('bg-secondary', 'bg-success');
+                  badge.textContent = 'Active';
                 }
               }
             }
