@@ -127,10 +127,10 @@ router.get('/companies', requireAuth, async (req, res) => {
 });
 
 // GET page to manage all cities
-router.get('/cities', requireAuth, async (req, res) => {
+router.get('/manage-cities', requireAuth, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM cities ORDER BY name ASC');
-    res.render('admin/manage-cities', {
+    res.render('admin/cities', {
       title: 'Manage Cities',
       cities: result.rows,
       admin: req.session.admin,
@@ -143,17 +143,17 @@ router.get('/cities', requireAuth, async (req, res) => {
 });
 
 // POST to add a new city
-router.post('/cities/add', requireAuth, async (req, res) => {
+router.post('/manage-cities/add', requireAuth, async (req, res) => {
   const { name } = req.body;
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
-    return res.status(400).redirect('/admin/cities?toast=City name cannot be empty.');
+    return res.status(400).redirect('/admin/manage-cities?toast=City name cannot be empty.');
   }
   if (name.length > 100) {
-    return res.status(400).redirect('/admin/cities?toast=City name is too long.');
+    return res.status(400).redirect('/admin/manage-cities?toast=City name is too long.');
   }
   try {
     await pool.query('INSERT INTO cities (name) VALUES ($1) ON CONFLICT (name) DO NOTHING', [name]);
-    res.redirect('/admin/cities?toast=City added successfully.');
+    res.redirect('/admin/manage-cities?toast=City added successfully.');
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -161,7 +161,7 @@ router.post('/cities/add', requireAuth, async (req, res) => {
 });
 
 // POST to delete a city
-router.post('/cities/delete/:id', requireAuth, async (req, res) => {
+router.post('/manage-cities/delete/:id', requireAuth, async (req, res) => {
   try {
     const cityId = parseInt(req.params.id);
     if (isNaN(cityId)) {
@@ -176,7 +176,7 @@ router.post('/cities/delete/:id', requireAuth, async (req, res) => {
 });
 
 // POST to toggle city status
-router.post('/cities/toggle/:id', requireAuth, async (req, res) => {
+router.post('/manage-cities/toggle/:id', requireAuth, async (req, res) => {
   try {
     const cityId = parseInt(req.params.id);
     if (isNaN(cityId)) {

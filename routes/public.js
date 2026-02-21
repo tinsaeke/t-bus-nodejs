@@ -279,7 +279,7 @@ router.get('/booking-success', async (req, res) => {
   try {
     const { ref } = req.query;
 
-    if (!ref || !/^TB[0-9]{8}$/.test(ref)) {
+    if (!ref || !/^TB\d{8}$/.test(ref)) {
       return res.redirect('/');
     }
 
@@ -437,7 +437,7 @@ router.get('/track-bus/:booking_reference', async (req, res) => {
   try {
     const { booking_reference } = req.params;
 
-    if (!booking_reference || !/^TB[0-9]{8}$/.test(booking_reference)) {
+    if (!booking_reference || !/^TB\d{8}$/.test(booking_reference)) {
       return res.redirect('/manage-booking?error=invalid_reference');
     }
 

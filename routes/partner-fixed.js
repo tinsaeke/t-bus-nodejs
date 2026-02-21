@@ -3,9 +3,6 @@ const bcrypt = require('bcryptjs');
 const router = express.Router();
 const pool = require('../config/database');
 
-const store = require('../data/store');
-const { companies, cities, buses, schedules } = store;
-
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 // Middleware to check partner authentication

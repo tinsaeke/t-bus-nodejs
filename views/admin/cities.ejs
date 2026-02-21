@@ -84,7 +84,7 @@
                     <h5 class="modal-title">Add New City</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="POST" action="/admin/cities/add">
+                <form method="POST" action="/admin/manage-cities/add">
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label">City Name *</label>
@@ -104,7 +104,7 @@
     <script>
         function deleteCity(id) {
             if (confirm('Are you sure you want to delete this city?')) {
-                fetch(`/admin/cities/delete/${id}`, { method: 'POST' })
+                fetch(`/admin/manage-cities/delete/${id}`, { method: 'POST' })
                 .then(() => location.reload());
             }
         }
